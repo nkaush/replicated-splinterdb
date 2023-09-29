@@ -18,7 +18,7 @@ limitations under the License.
 #pragma once
 
 #include "libnuraft/nuraft.hxx"
-#include "logger.h"
+#include "logging/logger.h"
 
 using namespace nuraft;
 
@@ -48,11 +48,15 @@ public:
         }
     }
 
-    void put_details(int level,
-                     const char* source_file,
-                     const char* func_name,
-                     size_t line_number,
-                     const std::string& msg)
+    inline SimpleLogger* operator*() const {
+        return my_log_;
+    }
+
+    void put(int level,
+             const char* source_file,
+             const char* func_name,
+             size_t line_number,
+             const std::string& msg)
     {
         if (my_log_) {
             my_log_->put( level, source_file, func_name, line_number,
@@ -60,12 +64,16 @@ public:
         }
     }
 
-    void set_level(int l) {
+    inline void set_level(int l) {
         if (!my_log_) return;
 
         if (l < 0) l = 1;
         if (l > 6) l = 6;
         my_log_->setLogLevel(l);
+    }
+
+    int getLogLevel() {
+        return get_level();
     }
 
     int get_level() {

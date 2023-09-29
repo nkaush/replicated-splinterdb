@@ -214,8 +214,8 @@ public:
 
         using MyCout = std::basic_ostream< char, std::char_traits<char> >;
         typedef MyCout& (*EndlFunc)(MyCout&);
-        inline LoggerStream& operator<<(EndlFunc func) {
-            func(sStream);
+        inline LoggerStream& operator<<(EndlFunc f) {
+            f(sStream);
             return *this;
         }
 

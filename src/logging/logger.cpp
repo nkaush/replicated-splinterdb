@@ -19,10 +19,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 **************************************************************************/
 
-#include "logger.h"
+#include "logging/logger.h"
 
 #if defined(__linux__) || defined(__APPLE__)
-    #include "backtrace.h"
+    #include "logging/backtrace.h"
 #endif
 
 #include <algorithm>
@@ -752,6 +752,7 @@ SimpleLogger::SimpleLogger(const std::string& file_path,
 }
 
 SimpleLogger::~SimpleLogger() {
+    flushAll();
     stop();
 }
 
