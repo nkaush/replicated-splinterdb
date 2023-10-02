@@ -15,7 +15,7 @@ dev: dev-image
 		-v `pwd`/docker/build:/work/build/build \
 		$(IMAGE_BUILD_ENV)
 
-run: # run-image
+run: run-image
 	docker run -it --network="host" --rm $(IMAGE_RUN_ENV)
 
 dev-image: dev-base-image

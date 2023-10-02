@@ -21,6 +21,14 @@ struct splinterdb_operation {
 
     static void deserialize(nuraft::buffer& payload_in,
                             splinterdb_operation& operation_out);
+
+    static splinterdb_operation make_put(owned_slice&& key,
+                                         owned_slice&& value);
+
+    static splinterdb_operation make_update(owned_slice&& key,
+                                            owned_slice&& value);
+    
+    static splinterdb_operation make_delete(owned_slice&& key);
 };
 
 }  // namespace replicated_splinterdb

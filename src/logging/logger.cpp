@@ -207,7 +207,7 @@ void SimpleLoggerMgr::_flushStackTraceBuffer(size_t buffer_len,
 void SimpleLoggerMgr::flushStackTraceBuffer(RawStackInfo& stack_info) {
 #if defined(__linux__) || defined(__APPLE__)
     size_t len = _stack_interpret(&stack_info.stackPtrs[0],
-                                  stack_info.stackPtrs.size(),
+                                  static_cast<int>(stack_info.stackPtrs.size()),
                                   stackTraceBuffer,
                                   stackTraceBufferSize);
     if (!len) return;

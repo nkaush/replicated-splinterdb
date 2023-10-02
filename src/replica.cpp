@@ -3,11 +3,13 @@
 #include "replica.h"
 #include "in_memory_state_mgr.hxx"
 
-#define __log (raft_logger_->getLogger())
-
 namespace replicated_splinterdb {
 
+using nuraft::asio_service;
+using nuraft::buffer;
 using nuraft::cs_new;
+using nuraft::inmem_state_mgr;
+using nuraft::ptr;
 using nuraft::raft_params;
 using nuraft::srv_config;
 
@@ -32,7 +34,7 @@ replica::replica(const replica_config& config)
       port_(config.port_),
       endpoint_(addr_ + ":" + std::to_string(port_)),
       config_(config),
-      raft_logger_(nullptr),
+      logger_(nullptr),
       sm_(nullptr),
       smgr_(nullptr),
       launcher_(),
@@ -42,18 +44,16 @@ replica::replica(const replica_config& config)
     }
 
     std::string log_file_name = 
-        config.log_file_.value_or("./srv" + std::to_string(server_id_) + ".log");
+        config_.log_file_.value_or("./srv" + std::to_string(server_id_) + ".log");
 
-    // TODO: fix this
-    // my_log_ = new SimpleLogger(log_file, 1024, 32*1024*1024, 10);
-    // my_log_->setLogLevel(log_level);
-    // my_log_->setDispLevel(-1);
-    // my_log_->setCrashDumpPath("./", true);
-    // my_log_->start();
-    raft_logger_ = cs_new<logger_wrapper>(log_file_name, config.log_level_);
+    logger_ = cs_new<SimpleLogger>(log_file_name, config_.log_level_);
+    logger_->setLogLevel(config_.log_level_);
+    logger_->setDispLevel(config_.display_level_);
+    logger_->setCrashDumpPath("./", true);
+    logger_->start();
 
     sm_ = cs_new<splinterdb_state_machine>(
-        config.splinterdb_cfg_,
+        config_.splinterdb_cfg_,
         config_.snapshot_frequency_ <= 0
     );
 
@@ -81,7 +81,7 @@ void replica::initialize() {
     raft_instance_ = launcher_.init(
         sm_,
         smgr_,
-        raft_logger_,
+        logger_,
         port_,
         asio_opt,
         params
@@ -90,7 +90,7 @@ void replica::initialize() {
     if ( !raft_instance_ ) {
         std::cerr << "Failed to initialize launcher (see the message "
                      "in the log file)." << std::endl;
-        raft_logger_.reset();
+        logger_.reset();
         exit(-1);
     }
 
@@ -108,13 +108,37 @@ void replica::initialize() {
     }
 
     std::cout << " FAILED" << std::endl;
-    raft_logger_.reset();
+    logger_.reset();
     exit(-1);
 }
 
 void replica::shutdown(size_t time_limit_sec) {
     launcher_.shutdown(time_limit_sec);
 }
+
+std::optional<owned_slice> replica::read(slice&& key) {
+    splinterdb_lookup_result result;
+    splinterdb_lookup_result_init(sm_->get_splinterdb_handle(), &result, 0, NULL);
+
+    int rc = splinterdb_lookup(
+        sm_->get_splinterdb_handle(),
+        std::forward<slice>(key),
+        &result
+    );
+
+    if (rc) {
+        return std::nullopt;
+    }
+
+    slice value;
+    rc = splinterdb_lookup_result_value(&result, &value);
+    if (rc) {
+        return std::nullopt;
+    }
+
+    return owned_slice(value);
+}
+
 
 void replica::add_server(int32_t server_id, const std::string& endpoint) {
     srv_config srv_conf_to_add(server_id, endpoint);
@@ -124,12 +148,12 @@ void replica::add_server(int32_t server_id, const std::string& endpoint) {
 void replica::add_server(const srv_config& srv_conf_to_add) {
     ptr<raft_result> ret = raft_instance_->add_srv(srv_conf_to_add);
     if (!ret->get_accepted()) {
-        _s_err(__log) << "failed to add server: " << ret->get_result_code();
+        _s_err(logger_) << "failed to add server: " << ret->get_result_code();
         return;
     }
-
-    _s_info(__log) << "add_server succeeded [id=" << srv_conf_to_add.get_id()
-                   << ", endpoint=" << srv_conf_to_add.get_endpoint() << "]";
+    
+    _s_info(logger_) << "add_server succeeded [id=" << srv_conf_to_add.get_id()
+                     << ", endpoint=" << srv_conf_to_add.get_endpoint() << "]";
 }
 
 void replica::append_log(const splinterdb_operation& operation, 
@@ -140,8 +164,8 @@ void replica::append_log(const splinterdb_operation& operation,
 
     if (!ret->get_accepted()) {
         // Log append rejected, usually because this node is not a leader.
-        _s_warn(__log) << "failed to append log: " << ret->get_result_code()
-                       << " (" << usToString(timer->getTimeUs()) << ")";
+        _s_warn(logger_) << "failed to append log: " << ret->get_result_code()
+                         << " (" << usToString(timer->getTimeUs()) << ")";
         return;
     }
 

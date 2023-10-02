@@ -34,8 +34,36 @@ void splinterdb_operation::deserialize(buffer& payload_in,
 
     if (operation_out.type_ == splinterdb_operation::PUT ||
         operation_out.type_ == splinterdb_operation::UPDATE) {
-        owned_slice::deserialize(operation_out.value_.value(), bs);
+        owned_slice value;
+        owned_slice::deserialize(value, bs);
+        operation_out.value_ = std::move(value);
     }
+}
+
+splinterdb_operation splinterdb_operation::make_put(owned_slice&& key,
+                                                    owned_slice&& value) {
+    return splinterdb_operation{
+        std::forward<owned_slice>(key),
+        std::forward<owned_slice>(value),
+        PUT
+    };
+}
+
+splinterdb_operation splinterdb_operation::make_update(owned_slice&& key,
+                                                       owned_slice&& value) {
+    return splinterdb_operation{
+        std::forward<owned_slice>(key),
+        std::forward<owned_slice>(value),
+        UPDATE
+    };
+}
+
+splinterdb_operation splinterdb_operation::make_delete(owned_slice&& key) {
+    return splinterdb_operation{
+        std::forward<owned_slice>(key),
+        std::nullopt,
+        DELETE
+    };
 }
 
 }  // namespace replicated_splinterdb

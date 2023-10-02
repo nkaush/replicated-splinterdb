@@ -22,12 +22,14 @@ struct replica_config {
         initialization_retries_(20),
         log_file_(std::nullopt),
         log_level_(SimpleLogger::Levels::INFO),
+        display_level_(SimpleLogger::Levels::WARNING),
         splinterdb_data_cfg_(splinterdb_data_cfg),
         splinterdb_cfg_(splinterdb_cfg) {
     splinterdb_cfg_.data_cfg = &splinterdb_data_cfg_;
 }
 
     // Replica identifier parameters
+
     int server_id_;
     uint16_t port_;
     std::string addr_;
@@ -44,13 +46,18 @@ struct replica_config {
     size_t initialization_retries_;
 
     // Logging information
+
     std::optional<std::string> log_file_;
     SimpleLogger::Levels log_level_;
+    SimpleLogger::Levels display_level_;
 
     // SplinterDB state machine configuration
 
     data_config splinterdb_data_cfg_;
     splinterdb_config splinterdb_cfg_;
+
+  private:
+    replica_config() = delete;
 };
 
 }  // namespace replicated_splinterdb

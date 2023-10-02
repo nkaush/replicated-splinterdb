@@ -1,7 +1,8 @@
 file(GLOB HEADER_LIST CONFIGURE_DEPENDS
         "${ReplicatedSplinterDB_SOURCE_DIR}/include/*.h"
         "${ReplicatedSplinterDB_SOURCE_DIR}/include/*.hpp"
-        "${ReplicatedSplinterDB_SOURCE_DIR}/include/*.hxx")
+        "${ReplicatedSplinterDB_SOURCE_DIR}/include/*.hxx"
+        "${ReplicatedSplinterDB_SOURCE_DIR}/src/logging/*")
 
 file(GLOB SOURCE_LIST CONFIGURE_DEPENDS
         "${ReplicatedSplinterDB_SOURCE_DIR}/src/*.cc"
@@ -16,7 +17,6 @@ target_compile_definitions(replicated-splinterdb PRIVATE -DSPLINTERDB_PLATFORM_D
 
 # Users of our library will need this directory.
 target_include_directories(replicated-splinterdb PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/include/")
-target_include_directories(replicated-splinterdb PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/src/")
 
 target_link_libraries(replicated-splinterdb nuraft)
 target_link_libraries(replicated-splinterdb splinterdb)
