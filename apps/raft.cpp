@@ -4,7 +4,7 @@
 #include <cstring>
 #include <iostream>
 
-#define DB_FILE_NAME    "splinterdb_intro_db"
+#define DB_FILE_NAME    "replicated_splinterdb"
 #define DB_FILE_SIZE_MB 1024 // Size of SplinterDB device; Fixed when created
 #define CACHE_SIZE_MB   64   // Size of cache; can be changed across boots
 
@@ -20,7 +20,13 @@ using nuraft::buffer;
 using nuraft::cmd_result_code;
 using nuraft::ptr;
 
-std::vector<std::string> tokenize(const char* str, char c = ' ') {
+static std::vector<std::string> tokenize(const char* str, char c = ' ');
+
+static void handle_result(ptr<Timer> timer,
+                          replica::raft_result& result, 
+                          ptr<std::exception>& err);
+
+std::vector<std::string> tokenize(const char* str, char c) {
     std::vector<std::string> tokens;
     do {
         const char *begin = str;
@@ -32,7 +38,7 @@ std::vector<std::string> tokenize(const char* str, char c = ' ') {
 }
 
 void handle_result(ptr<Timer> timer,
-                   replica::raft_result& result,
+                   replica::raft_result& result, 
                    ptr<std::exception>& err) {
     if (result.get_result_code() != cmd_result_code::OK) {
         // Something went wrong.

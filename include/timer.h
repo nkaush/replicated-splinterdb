@@ -73,7 +73,7 @@ static std::string usToString(uint64_t us) {
     return ss.str();
 }
 
-static void sleep_ms(size_t ms, const std::string& msg = std::string()) {
+[[maybe_unused]] static void sleep_ms(size_t ms, const std::string& msg = std::string()) {
     if (!msg.empty()) printf("%s (%zu ms)\n", msg.c_str(), ms);
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
