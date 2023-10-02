@@ -8,7 +8,6 @@ file(GLOB SOURCE_LIST CONFIGURE_DEPENDS
         "${ReplicatedSplinterDB_SOURCE_DIR}/src/*.cc"
         "${ReplicatedSplinterDB_SOURCE_DIR}/src/*.cpp"
         "${ReplicatedSplinterDB_SOURCE_DIR}/src/*.cxx"
-        "${ReplicatedSplinterDB_SOURCE_DIR}/src/*.cxx"
         "${ReplicatedSplinterDB_SOURCE_DIR}/src/logging/*")
 
 # Make an automatic library - will be static or dynamic based on user setting
