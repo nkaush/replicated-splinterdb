@@ -1,7 +1,9 @@
+#include <gflags/gflags.h>
 #include <iostream>
 
-#include "rpc/client.h"
-#include "rpc/rpc_error.h"
+#include "client/client.h"
+
+DEFINE_string(endpoint, "", "server endpoint formatted as <host>:<port>");
 
 #ifndef _CLM_DEFINED
 #define _CLM_DEFINED (1)
@@ -15,8 +17,25 @@
 #endif
 #endif
 
+using replicated_splinterdb::client;
+using replicated_splinterdb::rpc_mutation_result;
+
+static void handle_mutation_result(rpc_mutation_result&& result);
 
 static std::vector<std::string> tokenize(const char* str, char c = ' ');
+
+static void handle_mutation_result(rpc_mutation_result&& result) {
+    auto [spl_rc, raft_rc, msg] = result;
+
+    if (raft_rc == 0 && spl_rc == 0) {
+        std::cout << "succeeded" << std::endl;
+    } else if (raft_rc != 0) {
+        std::cout << "append log failed, rc=" << raft_rc << ": " << msg
+                  << std::endl;
+    } else if (spl_rc != 0) {
+        std::cout << "put failed, rc=" << spl_rc << std::endl;
+    }
+}
 
 std::vector<std::string> tokenize(const char* str, char c) {
     std::vector<std::string> tokens;
@@ -30,14 +49,31 @@ std::vector<std::string> tokenize(const char* str, char c) {
 }
 
 int main(int argc, char** argv) {
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <server port>" << std::endl;
+    std::string usage = "Usage: " + std::string(argv[0]) + " -endpoint <host>:<port>";
+    gflags::SetUsageMessage(usage);
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+    if (FLAGS_endpoint.empty()) {
+        std::cerr << "ERROR: flag '-endpoint' is required" << std::endl;
         return 1;
     }
 
-    int server_port = std::atoi(argv[1]);
-    rpc::client c("localhost", server_port);
+    auto pos = FLAGS_endpoint.find(":");
+    if (pos == std::string::npos) {
+        std::cerr << "ERROR: flag '-endpoint' has invalid format, "
+                  << "expected <host>:<port>" << std::endl;
+        return 1;
+    }
 
+    std::string host = FLAGS_endpoint.substr(0, pos);
+    int port = std::stoi(FLAGS_endpoint.substr(pos + 1));
+    if (port < 1024 || port > 65535) {
+        std::cerr << "ERROR: flag '-endpoint' has invalid port number, "
+                  << "expected 1024 <= port <= 65535" << std::endl;
+        return 1;
+    }
+
+    client c(host, static_cast<uint16_t>(port));
     std::string prompt = "spl-client> ";
     char cmd[1000];
 
@@ -55,39 +91,32 @@ int main(int argc, char** argv) {
         if (tokens[0] == "exit") {
             break;
         } else if (tokens[0] == "put" && tokens.size() >= 3) {
-            try {
-                std::vector<uint8_t> key(tokens[1].begin(), tokens[1].end());
-                std::vector<uint8_t> value(tokens[2].begin(), tokens[2].end());
-                auto ret_value = c.call("put", key, value).as<int32_t>();
+            std::vector<uint8_t> key(tokens[1].begin(), tokens[1].end());
+            std::vector<uint8_t> value(tokens[2].begin(), tokens[2].end());
 
-                std::cout << "succeeded, return code: " 
-                          << ret_value << std::endl;
-            } catch (rpc::rpc_error &e) {
-                std::cout << std::endl << e.what() << std::endl;
-                std::cout << "in function '" << e.get_function_name() << "': ";
-
-                using err_t = std::tuple<int, std::string>;
-                auto err = e.get_error().as<err_t>();
-                std::cout << "[error " << std::get<0>(err) << "]: " 
-                          << std::get<1>(err) << std::endl;
-            }
+            auto res = c.put(key, value);
+            handle_mutation_result(std::move(res));
         } else if (tokens[0] == "update" && tokens.size() >= 3) {
-            std::cout << "not yet implemented" << std::endl;
-        } else if (tokens[0] == "delete" && tokens.size() >= 2) {
-            std::cout << "not yet implemented" << std::endl;
-        } else if (tokens[0] == "get" && tokens.size() >= 2) {
-            try {
-                std::vector<uint8_t> key(tokens[1].begin(), tokens[1].end());
-                auto ret_value = c.call("get", key).as<std::vector<uint8_t>>();
-                std::string value(ret_value.begin(), ret_value.end());
-                std::cout << "value: " << value << std::endl;
-            } catch (rpc::rpc_error &e) {
-                std::cout << std::endl << e.what() << std::endl;
-                std::cout << "in function '" << e.get_function_name() << "': ";
+            std::vector<uint8_t> key(tokens[1].begin(), tokens[1].end());
+            std::vector<uint8_t> value(tokens[2].begin(), tokens[2].end());
 
-                using err_t = int32_t;
-                auto err = e.get_error().as<err_t>();
-                std::cout << "[error code " << err << "]" << std::endl;
+            auto res = c.update(key, value);
+            handle_mutation_result(std::move(res));
+        } else if (tokens[0] == "delete" && tokens.size() >= 2) {
+            std::vector<uint8_t> key(tokens[1].begin(), tokens[1].end());
+
+            auto res = c.del(key);
+            handle_mutation_result(std::move(res));
+        } else if (tokens[0] == "get" && tokens.size() >= 2) {
+            std::vector<uint8_t> key(tokens[1].begin(), tokens[1].end());
+            auto [value, spl_rc] = c.get(key);
+
+            if (spl_rc == 0) {
+                std::cout << "value: "
+                          << std::string(value.begin(), value.end())
+                          << std::endl;
+            } else {
+                std::cout << "get failed, rc=" << spl_rc << std::endl;
             }
         }
     }
