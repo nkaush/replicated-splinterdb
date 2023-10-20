@@ -50,9 +50,7 @@ std::vector<std::string> tokenize(const char* str, char c) {
 }
 
 int main(int argc, char** argv) {
-    std::string usage =
-        "Usage: " + std::string(argv[0]) + " -endpoint <host>:<port>";
-    gflags::SetUsageMessage(usage);
+    gflags::SetUsageMessage("A CLI client to interact with a replicated SplinterDB server");
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     if (FLAGS_endpoint.empty()) {
