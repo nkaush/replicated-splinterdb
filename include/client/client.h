@@ -25,6 +25,7 @@ class client {
                                const std::vector<uint8_t>& value);
 
     rpc_mutation_result del(const std::vector<uint8_t>& key);
+
   private:
     rpc::client c_;
 };

@@ -1,4 +1,5 @@
 #include <gflags/gflags.h>
+
 #include <iostream>
 
 #include "client/client.h"
@@ -49,7 +50,8 @@ std::vector<std::string> tokenize(const char* str, char c) {
 }
 
 int main(int argc, char** argv) {
-    std::string usage = "Usage: " + std::string(argv[0]) + " -endpoint <host>:<port>";
+    std::string usage =
+        "Usage: " + std::string(argv[0]) + " -endpoint <host>:<port>";
     gflags::SetUsageMessage(usage);
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 

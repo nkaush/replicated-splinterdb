@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     // Basic configuration of a SplinterDB instance
     splinterdb_config splinterdb_cfg;
     memset(&splinterdb_cfg, 0, sizeof(splinterdb_cfg));
-    std::string dbname = "spl-" + std::to_string(server_id) + ".db";
+    std::string dbname = "sm-state-" + std::to_string(server_id) + ".db";
     splinterdb_cfg.filename = dbname.c_str();
     splinterdb_cfg.disk_size = (DB_FILE_SIZE_MB * 1024 * 1024);
     splinterdb_cfg.cache_size = (CACHE_SIZE_MB * 1024 * 1024);
