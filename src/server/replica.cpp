@@ -145,9 +145,7 @@ void replica::dump_cache(const std::string& directory) {
 
 void replica::clear_cache() {
     std::cout << "hit clear cache in replica!" << std::endl;
-    // splinterdb_clear_cache(sm_->get_splinterdb_handle());
-    splinterdb_close(sm_->get_splinterdb_handle_ref());
-    splinterdb_open(&config_.splinterdb_cfg_, sm_->get_splinterdb_handle_ref());
+    splinterdb_clear_cache(sm_->get_splinterdb_handle());
 }
 
 std::pair<owned_slice, int32_t> replica::read(slice&& key) {
