@@ -119,6 +119,9 @@ int main(int argc, char** argv) {
     splinterdb_cfg.cache_size = (FLAGS_cachesize * 1024 * 1024);
     splinterdb_cfg.data_cfg = &splinter_data_cfg;
 
+    splinterdb_cfg.use_stats = true;
+    splinterdb_cfg.cache_use_stats = true;
+
     replica_config cfg{splinter_data_cfg, splinterdb_cfg};
     cfg.server_id_ = FLAGS_serverid;
 
