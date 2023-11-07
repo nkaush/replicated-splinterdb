@@ -177,6 +177,8 @@ class splinterdb_state_machine : public nuraft::state_machine {
 
     inline splinterdb* get_splinterdb_handle() const { return spl_handle_; }
 
+    inline splinterdb** get_splinterdb_handle_ref() { return &spl_handle_; }
+
   private:
     splinterdb* spl_handle_;
 
