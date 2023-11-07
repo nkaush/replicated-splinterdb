@@ -30,7 +30,7 @@ class client {
 
     rpc_mutation_result del(const std::vector<uint8_t>& key);
 
-    void trigger_cache_dumps();
+    void trigger_cache_dumps(const std::string& directory);
 
     void trigger_cache_clear();
 

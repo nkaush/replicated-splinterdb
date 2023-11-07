@@ -28,7 +28,7 @@ class replica {
 
     explicit replica(const replica_config& config);
 
-    void dump_cache();
+    void dump_cache(const std::string& directory);
 
     void clear_cache();
 

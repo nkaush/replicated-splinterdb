@@ -67,9 +67,9 @@ client::client(const std::string& host, uint16_t port, uint64_t timeout_ms,
     read_policy_ = std::make_unique<round_robin_read_policy>(srv_ids);
 }
 
-void client::trigger_cache_dumps() {
+void client::trigger_cache_dumps(const std::string& directory) {
     for (auto& [id, c] : clients_) {
-        bool result = c.call(RPC_SPLINTERDB_DUMPCACHE).as<bool>();
+        bool result = c.call(RPC_SPLINTERDB_DUMPCACHE, directory).as<bool>();
 
         if (!result) {
             std::cerr << "WARNING: failed to dump cache on server " << id

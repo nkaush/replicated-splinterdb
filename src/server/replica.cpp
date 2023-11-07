@@ -139,8 +139,8 @@ void replica::register_thread() {
     splinterdb_register_thread(sm_->get_splinterdb_handle());
 }
 
-void replica::dump_cache() {
-    splinterdb_print_cache(sm_->get_splinterdb_handle(), "cachedump");
+void replica::dump_cache(const std::string& directory) {
+    splinterdb_print_cache(sm_->get_splinterdb_handle(), directory.c_str());
 }
 
 void replica::clear_cache() {

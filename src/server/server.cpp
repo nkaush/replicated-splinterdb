@@ -78,9 +78,9 @@ void server::initialize() {
                        return std::make_tuple(static_cast<int32_t>(rc), msg);
                    });
 
-    // void -> bool
-    client_srv_.bind(RPC_SPLINTERDB_DUMPCACHE, [this]() {
-        replica_instance_.dump_cache();
+    // string -> bool
+    client_srv_.bind(RPC_SPLINTERDB_DUMPCACHE, [this](std::string directory) {
+        replica_instance_.dump_cache(directory);
         return true;
     });
 
