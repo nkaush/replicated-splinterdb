@@ -9,6 +9,7 @@ file(GLOB SERVER_SOURCE_LIST CONFIGURE_DEPENDS
 # Make the static libraries that are to be linked to the main executables
 add_library(replicated-splinterdb-server STATIC EXCLUDE_FROM_ALL ${SERVER_SOURCE_LIST} ${SERVER_HEADER_LIST})
 add_dependencies(replicated-splinterdb-server libsplinterdb.so)
+add_dependencies(replicated-splinterdb-server NuRaft::static_lib)
 
 # All users of these libraries will need at least C++17
 target_compile_features(replicated-splinterdb-server PUBLIC cxx_std_17)
