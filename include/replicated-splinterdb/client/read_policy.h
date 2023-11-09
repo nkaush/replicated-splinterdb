@@ -17,7 +17,7 @@ class read_policy {
 
     virtual ~read_policy() = default;
 
-    int32_t next_server(const std::string& k) { return server_ids_[next(k)]; }
+    int32_t next_server(const std::string& k);
 
   protected:
     virtual size_t next(const std::string& key) = 0;
@@ -34,11 +34,7 @@ class round_robin_read_policy : public read_policy {
         : read_policy(server_ids), rri_(0) {}
 
   protected:
-    size_t next(const std::string&) override {
-        size_t ret = rri_;
-        rri_ = (rri_ + 1) % num_servers();
-        return ret;
-    }
+    size_t next(const std::string&) override;
 
   private:
     size_t rri_;
@@ -46,24 +42,21 @@ class round_robin_read_policy : public read_policy {
 
 class random_read_policy : public read_policy {
   public:
-    random_read_policy(const std::vector<int32_t>& server_ids)
-        : read_policy(server_ids) {
-        srand(time(nullptr));
-    }
+    random_read_policy(const std::vector<int32_t>& server_ids);
 
   protected:
-    size_t next(const std::string&) override { return rand() % num_servers(); }
+    size_t next(const std::string&) override;
 };
 
 class hash_read_policy : public read_policy {
   public:
-    hash_read_policy(const std::vector<int32_t>& server_ids)
-        : read_policy(server_ids), h_() {}
+    hash_read_policy(const std::vector<int32_t>& server_ids);
 
-    size_t next(const std::string& k) override { return h_(k) % num_servers(); }
+  protected:
+    size_t next(const std::string& k) override;
 
   private:
-    std::hash<std::string> h_;
+    std::vector<uint32_t> ranges_;
 };
 
 }  // namespace replicated_splinterdb
