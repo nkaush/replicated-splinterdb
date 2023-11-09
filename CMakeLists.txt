@@ -24,9 +24,9 @@ include_directories("${ReplicatedSplinterDB_SOURCE_DIR}/third-party/splinterdb/i
 # Include subdirectories with library source code 
 set(DISABLE_SSL 1)
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/third-party/nuraft" EXCLUDE_FROM_ALL)
-add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/third-party/rpclib")
+add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/third-party/rpclib" EXCLUDE_FROM_ALL)
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/apps" EXCLUDE_FROM_ALL)
-add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/src/client")
+add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/src/client" EXCLUDE_FROM_ALL)
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/src/server" EXCLUDE_FROM_ALL)
 
 set_property(DIRECTORY "${ReplicatedSplinterDB_SOURCE_DIR}/third-party/nuraft/tests" PROPERTY EXCLUDE_FROM_ALL True)
