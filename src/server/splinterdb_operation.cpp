@@ -1,4 +1,4 @@
-#include "server/splinterdb_operation.h"
+#include "replicated-splinterdb/server/splinterdb_operation.h"
 
 #include "libnuraft/buffer.hxx"
 

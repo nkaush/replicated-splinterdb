@@ -1,9 +1,9 @@
-#include "server/server.h"
+#include "replicated-splinterdb/server/server.h"
 
 #include <iostream>
 
-#include "common/rpc.h"
-#include "common/types.h"
+#include "replicated-splinterdb/common/rpc.h"
+#include "replicated-splinterdb/common/types.h"
 #include "libnuraft/buffer_serializer.hxx"
 
 namespace replicated_splinterdb {

@@ -1,6 +1,6 @@
 file(GLOB SERVER_HEADER_LIST CONFIGURE_DEPENDS
-    "${ReplicatedSplinterDB_SOURCE_DIR}/include/server/*.h"
-    "${ReplicatedSplinterDB_SOURCE_DIR}/include/common/*.h")
+    "${ReplicatedSplinterDB_SOURCE_DIR}/include/replicated-splinterdb/server/*.h"
+    "${ReplicatedSplinterDB_SOURCE_DIR}/include/replicated-splinterdb/common/*.h")
 
 file(GLOB SERVER_SOURCE_LIST CONFIGURE_DEPENDS
     "${ReplicatedSplinterDB_SOURCE_DIR}/src/server/*.cpp"
@@ -28,7 +28,7 @@ target_compile_options(
 )
 
 # Users of our libraries will need these include directories
-target_include_directories(replicated-splinterdb-server PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/include/server/")
+target_include_directories(replicated-splinterdb-server PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/include/replicated-splinterdb/server/")
 
 # Link the libraries to some other dependencies
 target_link_libraries(replicated-splinterdb-server nuraft.a rpc splinterdb pthread)

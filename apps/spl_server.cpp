@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include "common/rpc.h"
+#include "replicated-splinterdb/common/rpc.h"
 #include "replica_config.h"
 #include "rpc/client.h"
 #include "server.h"

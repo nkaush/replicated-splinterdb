@@ -1,4 +1,4 @@
-#include "common/types.h"
+#include "replicated-splinterdb/common/types.h"
 
 namespace replicated_splinterdb {
 

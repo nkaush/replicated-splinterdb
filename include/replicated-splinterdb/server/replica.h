@@ -3,10 +3,10 @@
 
 #include <memory>
 
-#include "common/timer.h"
 #include "libnuraft/nuraft.hxx"
-#include "server/replica_config.h"
-#include "server/splinterdb_operation.h"
+#include "replicated-splinterdb/common/timer.h"
+#include "replicated-splinterdb/server/replica_config.h"
+#include "replicated-splinterdb/server/splinterdb_operation.h"
 
 namespace replicated_splinterdb {
 

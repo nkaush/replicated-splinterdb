@@ -3,8 +3,8 @@
 
 #include <map>
 
-#include "client/read_policy.h"
-#include "common/types.h"
+#include "replicated-splinterdb/client/read_policy.h"
+#include "replicated-splinterdb/common/types.h"
 #include "rpc/client.h"
 
 namespace replicated_splinterdb {

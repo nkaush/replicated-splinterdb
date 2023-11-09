@@ -1,10 +1,10 @@
-#include "client/client.h"
+#include "replicated-splinterdb/client/client.h"
 
 #include <chrono>
 #include <iostream>
 #include <thread>
 
-#include "common/rpc.h"
+#include "replicated-splinterdb/common/rpc.h"
 
 // TODOS: Implement latency-based read policy
 

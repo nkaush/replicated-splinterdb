@@ -1,7 +1,7 @@
 # CMakeLists.txt for the client library
 file(GLOB CLIENT_HEADER_LIST CONFIGURE_DEPENDS
-    "${ReplicatedSplinterDB_SOURCE_DIR}/include/client/*.h"
-    "${ReplicatedSplinterDB_SOURCE_DIR}/include/common/*.h")
+    "${ReplicatedSplinterDB_SOURCE_DIR}/include/replicated-splinterdb/client/*.h"
+    "${ReplicatedSplinterDB_SOURCE_DIR}/include/replicated-splinterdb/common/*.h")
 
 file(GLOB CLIENT_SOURCE_LIST CONFIGURE_DEPENDS
     "${ReplicatedSplinterDB_SOURCE_DIR}/src/client/*.cpp"
