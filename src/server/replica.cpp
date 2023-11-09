@@ -144,11 +144,10 @@ void replica::dump_cache(const std::string& directory) {
 }
 
 void replica::clear_cache() {
-    std::cout << "hit clear cache in replica!" << std::endl;
     splinterdb_clear_cache(sm_->get_splinterdb_handle());
 }
 
-std::pair<owned_slice, int32_t> replica::read(slice&& key) {
+std::pair<std::unique_ptr<std::string>, int32_t> replica::read(slice&& key) {
     splinterdb_lookup_result result;
     splinterdb_lookup_result_init(sm_->get_splinterdb_handle(), &result, 0,
                                   NULL);
@@ -156,16 +155,18 @@ std::pair<owned_slice, int32_t> replica::read(slice&& key) {
     int rc = splinterdb_lookup(sm_->get_splinterdb_handle(),
                                std::forward<slice>(key), &result);
     if (rc) {
-        return {owned_slice{}, rc};
+        return {nullptr, rc};
     }
 
     slice value;
     rc = splinterdb_lookup_result_value(&result, &value);
     if (rc) {
-        return {owned_slice{}, rc};
+        return {nullptr, rc};
     }
 
-    return {owned_slice(value), rc};
+    return {std::make_unique<std::string>(static_cast<const char*>(value.data),
+                                          static_cast<size_t>(value.length)),
+            rc};
 }
 
 std::pair<cmd_result_code, std::string> replica::add_server(

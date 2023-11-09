@@ -3,7 +3,7 @@
 
 #include <optional>
 
-#include "server/owned_slice.h"
+#include "libnuraft/buffer_serializer.hxx"
 
 namespace replicated_splinterdb {
 
@@ -13,30 +13,30 @@ class splinterdb_operation {
 
     nuraft::ptr<nuraft::buffer> serialize() const;
 
-    const owned_slice& key() const { return key_; }
+    const std::string& key() const { return key_; }
 
-    const owned_slice& value() const { return *value_; }
+    const std::string& value() const { return *value_; }
 
     splinterdb_operation_type type() const { return type_; }
 
     static splinterdb_operation deserialize(nuraft::buffer& payload_in);
 
-    static splinterdb_operation make_put(owned_slice&& key,
-                                         owned_slice&& value);
+    static splinterdb_operation make_put(std::string&& key,
+                                         std::string&& value);
 
-    static splinterdb_operation make_update(owned_slice&& key,
-                                            owned_slice&& value);
+    static splinterdb_operation make_update(std::string&& key,
+                                            std::string&& value);
 
-    static splinterdb_operation make_delete(owned_slice&& key);
+    static splinterdb_operation make_delete(std::string&& key);
 
   private:
-    splinterdb_operation(owned_slice&& key, std::optional<owned_slice>&& value,
+    splinterdb_operation(std::string&& key, std::optional<std::string>&& value,
                          splinterdb_operation_type type);
 
     splinterdb_operation() = delete;
 
-    owned_slice key_;
-    std::optional<owned_slice> value_;
+    std::string key_;
+    std::optional<std::string> value_;
     splinterdb_operation_type type_;
 };
 

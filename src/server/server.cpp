@@ -11,6 +11,7 @@ namespace replicated_splinterdb {
 using nuraft::buffer;
 using nuraft::cmd_result_code;
 using nuraft::ptr;
+using std::string;
 using std::vector;
 
 server::server(uint16_t client_port, uint16_t join_port,
@@ -129,30 +130,29 @@ void server::initialize() {
         }
     });
 
-    // std::vector<uint8_t> -> rpc_read_result
-    client_srv_.bind(RPC_SPLINTERDB_GET, [this](vector<uint8_t> key) {
+    // string -> rpc_read_result
+    client_srv_.bind(RPC_SPLINTERDB_GET, [this](string key) {
         slice key_slice = slice_create(key.size(), key.data());
         auto [slice, rc] = replica_instance_.read(std::move(key_slice));
 
         if (rc == 0) {
-            return rpc_read_result{owned_slice::take_data(std::move(slice)), 0};
+            return rpc_read_result{*slice, 0};
         } else {
             return rpc_read_result{{}, rc};
         }
     });
 
-    // (std::vector<uint8_t>, std::vector<uint8_t>) -> rpc_mutation_result
-    client_srv_.bind(
-        RPC_SPLINTERDB_PUT, [this](vector<uint8_t> key, vector<uint8_t> value) {
-            splinterdb_operation op{splinterdb_operation::make_put(
-                std::move(key), std::move(value))};
-            ptr<replica::raft_result> result = replica_instance_.append_log(op);
+    // (string, string) -> rpc_mutation_result
+    client_srv_.bind(RPC_SPLINTERDB_PUT, [this](string key, string value) {
+        splinterdb_operation op{
+            splinterdb_operation::make_put(std::move(key), std::move(value))};
+        ptr<replica::raft_result> result = replica_instance_.append_log(op);
 
-            return extract_result(result);
-        });
+        return extract_result(result);
+    });
 
-    // std::vector<uint8_t> -> rpc_mutation_result
-    client_srv_.bind(RPC_SPLINTERDB_DELETE, [this](vector<uint8_t> key) {
+    // string -> rpc_mutation_result
+    client_srv_.bind(RPC_SPLINTERDB_DELETE, [this](string key) {
         splinterdb_operation op{
             splinterdb_operation::make_delete(std::move(key))};
         ptr<replica::raft_result> result = replica_instance_.append_log(op);
@@ -160,9 +160,8 @@ void server::initialize() {
         return extract_result(result);
     });
 
-    // (std::vector<uint8_t>, std::vector<uint8_t>) -> rpc_mutation_result
-    client_srv_.bind(RPC_SPLINTERDB_UPDATE, [this](vector<uint8_t> key,
-                                                   vector<uint8_t> value) {
+    // (string, string) -> rpc_mutation_result
+    client_srv_.bind(RPC_SPLINTERDB_UPDATE, [this](string key, string value) {
         splinterdb_operation op{
             splinterdb_operation::make_put(std::move(key), std::move(value))};
         ptr<replica::raft_result> result = replica_instance_.append_log(op);
