@@ -201,9 +201,14 @@ ulong inmem_log_store::term_at(ulong index) {
 
 ptr<buffer> inmem_log_store::pack(ulong index, int32 cnt) {
     std::vector<ptr<buffer>> logs;
+    if (cnt < 0) {
+        throw std::runtime_error("Packing negative number of logs");
+    }
+
+    ulong count = static_cast<ulong>(cnt);
 
     size_t size_total = 0;
-    for (ulong ii = index; ii < index + cnt; ++ii) {
+    for (ulong ii = index; ii < index + count; ++ii) {
         ptr<log_entry> le = nullptr;
         {
             std::lock_guard<std::mutex> l(logs_lock_);
@@ -216,7 +221,7 @@ ptr<buffer> inmem_log_store::pack(ulong index, int32 cnt) {
     }
 
     ptr<buffer> buf_out =
-        buffer::alloc(sizeof(int32) + cnt * sizeof(int32) + size_total);
+        buffer::alloc(sizeof(int32) + count * sizeof(int32) + size_total);
     buf_out->pos(0);
     buf_out->put((int32)cnt);
 
@@ -230,13 +235,21 @@ ptr<buffer> inmem_log_store::pack(ulong index, int32 cnt) {
 
 void inmem_log_store::apply_pack(ulong index, buffer& pack) {
     pack.pos(0);
-    int32 num_logs = pack.get_int();
+    int32 nlogs = pack.get_int();
+    if (nlogs < 0) {
+        throw std::runtime_error("Invalid number of logs (negative)");
+    }
+    ulong num_logs = static_cast<size_t>(nlogs);
 
-    for (int32 ii = 0; ii < num_logs; ++ii) {
+    for (ulong ii = 0; ii < num_logs; ++ii) {
         ulong cur_idx = index + ii;
         int32 buf_size = pack.get_int();
 
-        ptr<buffer> buf_local = buffer::alloc(buf_size);
+        if (buf_size < 0) {
+            throw std::runtime_error("Invalid buffer size (negative)");
+        }
+
+        ptr<buffer> buf_local = buffer::alloc(static_cast<size_t>(buf_size));
         pack.get(buf_local);
 
         ptr<log_entry> le = log_entry::deserialize(*buf_local);
