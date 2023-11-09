@@ -4,7 +4,7 @@
 #include <iostream>
 #include <numeric>
 
-#include "server/splinterdb_operation.h"
+#include "replicated-splinterdb/server/splinterdb_operation.h"
 
 namespace replicated_splinterdb {
 

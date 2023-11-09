@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "common/timer.h"
-#include "server/splinterdb_operation.h"
+#include "replicated-splinterdb/common/timer.h"
+#include "replicated-splinterdb/server/splinterdb_operation.h"
 
 namespace replicated_splinterdb {
 
@@ -42,22 +42,27 @@ ptr<buffer> splinterdb_state_machine::commit(const ulong log_idx, buffer& buf) {
     Timer timer;
 
     splinterdb_operation operation = splinterdb_operation::deserialize(buf);
-    slice key_slice, value_slice;
     int32_t ret_code;
-
-    operation.key().fill_slice(key_slice);
 
     switch (operation.type()) {
         case splinterdb_operation::PUT:
-            operation.value().fill_slice(value_slice);
-            ret_code = splinterdb_insert(spl_handle_, key_slice, value_slice);
+            ret_code = splinterdb_insert(
+                spl_handle_,
+                slice_create(operation.key().size(), operation.key().data()),
+                slice_create(operation.value().size(),
+                             operation.value().data()));
             break;
         case splinterdb_operation::UPDATE:
-            operation.value().fill_slice(value_slice);
-            ret_code = splinterdb_update(spl_handle_, key_slice, value_slice);
+            ret_code = splinterdb_update(
+                spl_handle_,
+                slice_create(operation.key().size(), operation.key().data()),
+                slice_create(operation.value().size(),
+                             operation.value().data()));
             break;
         case splinterdb_operation::DELETE:
-            ret_code = splinterdb_delete(spl_handle_, key_slice);
+            ret_code = splinterdb_delete(
+                spl_handle_,
+                slice_create(operation.key().size(), operation.key().data()));
             break;
         default:
             throw std::runtime_error("Unknown operation type.");

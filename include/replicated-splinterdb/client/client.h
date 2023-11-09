@@ -3,8 +3,8 @@
 
 #include <map>
 
-#include "client/read_policy.h"
-#include "common/types.h"
+#include "replicated-splinterdb/client/read_policy.h"
+#include "replicated-splinterdb/common/types.h"
 #include "rpc/client.h"
 
 namespace replicated_splinterdb {
@@ -17,18 +17,17 @@ class client {
 
     client& operator=(const client&) = delete;
 
-    client(const std::string& host, uint16_t port, uint64_t timeout_ms = 10000,
-           uint16_t num_retries = 3);
+    client(const std::string& host, uint16_t port,
+           read_policy::algorithm read_algo, uint64_t timeout_ms = 10000,
+           uint16_t num_retries = 3, bool print_errors = false);
 
-    rpc_read_result get(const std::vector<uint8_t>& key);
+    rpc_read_result get(const std::string& key);
 
-    rpc_mutation_result put(const std::vector<uint8_t>& key,
-                            const std::vector<uint8_t>& value);
+    rpc_mutation_result put(const std::string& key, const std::string& val);
 
-    rpc_mutation_result update(const std::vector<uint8_t>& key,
-                               const std::vector<uint8_t>& value);
+    rpc_mutation_result update(const std::string& key, const std::string& val);
 
-    rpc_mutation_result del(const std::vector<uint8_t>& key);
+    rpc_mutation_result del(const std::string& key);
 
     void trigger_cache_dumps(const std::string& directory);
 
@@ -43,6 +42,7 @@ class client {
     std::unique_ptr<read_policy> read_policy_;
     int32_t leader_id_;
     const uint16_t num_retries_;
+    bool print_errors_;
 
     rpc::client& get_leader_handle();
 

@@ -3,8 +3,8 @@
 
 #include "rpc/server.h"
 #include "rpc/this_handler.h"
-#include "server/replica.h"
-#include "server/replica_config.h"
+#include "replicated-splinterdb/server/replica.h"
+#include "replicated-splinterdb/server/replica_config.h"
 
 namespace replicated_splinterdb {
 

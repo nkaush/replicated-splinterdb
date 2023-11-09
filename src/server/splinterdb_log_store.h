@@ -7,7 +7,7 @@
 #include "libnuraft/event_awaiter.hxx"
 #include "libnuraft/internal_timer.hxx"
 #include "libnuraft/log_store.hxx"
-#include "server/splinterdb_wrapper.h"
+#include "replicated-splinterdb/server/splinterdb_wrapper.h"
 
 namespace replicated_splinterdb {
 

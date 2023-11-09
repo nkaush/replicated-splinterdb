@@ -155,7 +155,7 @@ int main() {
                (int)slice_length(value), (char *)slice_data(value));
     }
 
-    splinterdb_print_cache(spl_handle);
+    splinterdb_print_cache(spl_handle, "cachedump");
     splinterdb_stats_print_insertion(spl_handle);
     splinterdb_stats_print_lookup(spl_handle);
 

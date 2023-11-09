@@ -1,11 +1,12 @@
 #ifndef REPLICATED_SPLINTERDB_SERVER_REPLICA_H
 #define REPLICATED_SPLINTERDB_SERVER_REPLICA_H
 
-#include "common/timer.h"
+#include <memory>
+
 #include "libnuraft/nuraft.hxx"
-#include "server/owned_slice.h"
-#include "server/replica_config.h"
-#include "server/splinterdb_operation.h"
+#include "replicated-splinterdb/common/timer.h"
+#include "replicated-splinterdb/server/replica_config.h"
+#include "replicated-splinterdb/server/splinterdb_operation.h"
 
 namespace replicated_splinterdb {
 
@@ -32,7 +33,7 @@ class replica {
 
     void clear_cache();
 
-    std::pair<owned_slice, int32_t> read(slice&& key);
+    std::pair<std::unique_ptr<std::string>, int32_t> read(slice&& key);
 
     std::pair<nuraft::cmd_result_code, std::string> add_server(
         int32_t server_id, const std::string& raft_endpoint,

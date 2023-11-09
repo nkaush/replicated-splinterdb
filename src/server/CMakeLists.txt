@@ -1,13 +1,15 @@
 file(GLOB SERVER_HEADER_LIST CONFIGURE_DEPENDS
-    "${ReplicatedSplinterDB_SOURCE_DIR}/include/server/*.h"
-    "${ReplicatedSplinterDB_SOURCE_DIR}/include/common/*.h")
+    "${ReplicatedSplinterDB_SOURCE_DIR}/include/replicated-splinterdb/server/*.h"
+    "${ReplicatedSplinterDB_SOURCE_DIR}/include/replicated-splinterdb/common/*.h")
 
 file(GLOB SERVER_SOURCE_LIST CONFIGURE_DEPENDS
     "${ReplicatedSplinterDB_SOURCE_DIR}/src/server/*.cpp"
     "${ReplicatedSplinterDB_SOURCE_DIR}/src/common/*.cpp")
 
 # Make the static libraries that are to be linked to the main executables
-add_library(replicated-splinterdb-server STATIC ${SERVER_SOURCE_LIST} ${SERVER_HEADER_LIST})
+add_library(replicated-splinterdb-server STATIC EXCLUDE_FROM_ALL ${SERVER_SOURCE_LIST} ${SERVER_HEADER_LIST})
+add_dependencies(replicated-splinterdb-server libsplinterdb.so)
+add_dependencies(replicated-splinterdb-server NuRaft::static_lib)
 
 # All users of these libraries will need at least C++17
 target_compile_features(replicated-splinterdb-server PUBLIC cxx_std_17)
@@ -26,7 +28,7 @@ target_compile_options(
 )
 
 # Users of our libraries will need these include directories
-target_include_directories(replicated-splinterdb-server PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/include/server/")
+target_include_directories(replicated-splinterdb-server PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/include/replicated-splinterdb/server/")
 
 # Link the libraries to some other dependencies
 target_link_libraries(replicated-splinterdb-server nuraft.a rpc splinterdb pthread)

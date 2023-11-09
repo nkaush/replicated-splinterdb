@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "client/client.h"
+#include "replicated-splinterdb/client/client.h"
 
 DEFINE_string(endpoint, "", "server endpoint formatted as <host>:<port>");
 DEFINE_string(e, "",
@@ -63,25 +63,16 @@ static bool handle_command(client& c, const std::vector<std::string>& tokens) {
                    [](unsigned char c) { return std::tolower(c); });
 
     if (cmd == "put" && tokens.size() >= 3) {
-        std::vector<uint8_t> key(tokens[1].begin(), tokens[1].end());
-        std::vector<uint8_t> value(tokens[2].begin(), tokens[2].end());
-
-        auto res = c.put(key, value);
+        auto res = c.put(tokens[1], tokens[2]);
         return handle_mutation_result(std::move(res));
     } else if (cmd == "update" && tokens.size() >= 3) {
-        std::vector<uint8_t> key(tokens[1].begin(), tokens[1].end());
-        std::vector<uint8_t> value(tokens[2].begin(), tokens[2].end());
-
-        auto res = c.update(key, value);
+        auto res = c.update(tokens[1], tokens[2]);
         return handle_mutation_result(std::move(res));
     } else if (cmd == "delete" && tokens.size() >= 2) {
-        std::vector<uint8_t> key(tokens[1].begin(), tokens[1].end());
-
-        auto res = c.del(key);
+        auto res = c.del(tokens[1]);
         return handle_mutation_result(std::move(res));
     } else if (cmd == "get" && tokens.size() >= 2) {
-        std::vector<uint8_t> key(tokens[1].begin(), tokens[1].end());
-        auto [value, spl_rc] = c.get(key);
+        auto [value, spl_rc] = c.get(tokens[1]);
 
         if (spl_rc == 0) {
             std::cout << "value: " << std::string(value.begin(), value.end())
@@ -158,7 +149,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    client c(host, static_cast<uint16_t>(port));
+    client c(host, static_cast<uint16_t>(port), replicated_splinterdb::read_policy::algorithm::round_robin);
 
     if (!FLAGS_e.empty()) {
         auto tokens(tokenize(FLAGS_e.c_str()));
