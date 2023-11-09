@@ -149,7 +149,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    client c(host, static_cast<uint16_t>(port), replicated_splinterdb::read_policy::algorithm::round_robin);
+    client c(host, static_cast<uint16_t>(port),
+             replicated_splinterdb::read_policy::algorithm::round_robin);
 
     if (!FLAGS_e.empty()) {
         auto tokens(tokenize(FLAGS_e.c_str()));

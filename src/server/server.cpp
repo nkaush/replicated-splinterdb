@@ -2,9 +2,9 @@
 
 #include <iostream>
 
+#include "libnuraft/buffer_serializer.hxx"
 #include "replicated-splinterdb/common/rpc.h"
 #include "replicated-splinterdb/common/types.h"
-#include "libnuraft/buffer_serializer.hxx"
 
 namespace replicated_splinterdb {
 

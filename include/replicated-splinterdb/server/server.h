@@ -1,10 +1,10 @@
 #ifndef REPLICATED_SPLINTERDB_SERVER_SERVER_H
 #define REPLICATED_SPLINTERDB_SERVER_SERVER_H
 
-#include "rpc/server.h"
-#include "rpc/this_handler.h"
 #include "replicated-splinterdb/server/replica.h"
 #include "replicated-splinterdb/server/replica_config.h"
+#include "rpc/server.h"
+#include "rpc/this_handler.h"
 
 namespace replicated_splinterdb {
 

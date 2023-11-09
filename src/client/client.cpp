@@ -82,7 +82,7 @@ client::client(const string& host, uint16_t port,
             break;
         default:
             throw std::runtime_error("Invalid read policy");
-    }    
+    }
 }
 
 void client::trigger_cache_dumps(const string& directory) {
@@ -117,8 +117,8 @@ bool client::try_handle_leader_change(int32_t raft_rc) {
         leader_id_ = get_leader_id();
 
         if (print_errors_) {
-            std::cerr << "INFO: leader changed from " << old_leader_id 
-                      << " to " << leader_id_ << std::endl;
+            std::cerr << "INFO: leader changed from " << old_leader_id << " to "
+                      << leader_id_ << std::endl;
         }
         return true;
     }
@@ -149,7 +149,8 @@ rpc_mutation_result client::put(const string& key, const string& value) {
             break;
         } else if (try_handle_leader_change(get_nuraft_return_code(result))) {
             if (print_errors_) {
-                std::cerr << "WARNING: leader changed, retrying..." << std::endl;
+                std::cerr << "WARNING: leader changed, retrying..."
+                          << std::endl;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
@@ -175,7 +176,8 @@ rpc_mutation_result client::update(const string& key, const string& value) {
             break;
         } else if (try_handle_leader_change(get_nuraft_return_code(result))) {
             if (print_errors_) {
-                std::cerr << "WARNING: leader changed, retrying..." << std::endl;
+                std::cerr << "WARNING: leader changed, retrying..."
+                          << std::endl;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
@@ -201,7 +203,8 @@ rpc_mutation_result client::del(const std::string& key) {
             break;
         } else if (try_handle_leader_change(get_nuraft_return_code(result))) {
             if (print_errors_) {
-                std::cerr << "WARNING: leader changed, retrying..." << std::endl;
+                std::cerr << "WARNING: leader changed, retrying..."
+                          << std::endl;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
