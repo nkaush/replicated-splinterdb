@@ -19,7 +19,7 @@ static bool validate_port(const char* flagname, int32 value) {
 }
 
 static bool validate_nthreads(const char* flagname, int64 value) {
-    if (value >= 4 && value <= 50) {  // value is ok
+    if (value >= 4 && value <= 80) {  // value is ok
         return true;
     }
 

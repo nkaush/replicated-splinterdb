@@ -20,8 +20,6 @@ server::server(uint16_t client_port, uint16_t join_port,
     initialize();
 
     client_srv_.set_worker_init_func([this] {
-        std::cout << "Initializing worker thread " << std::this_thread::get_id()
-                  << std::endl;
         replica_instance_.register_thread();
     });
 }
