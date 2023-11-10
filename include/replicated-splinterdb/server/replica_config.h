@@ -1,7 +1,9 @@
 #ifndef REPLICATED_SPLINTERDB_SERVER_REPLICA_CONFIG_H
 #define REPLICATED_SPLINTERDB_SERVER_REPLICA_CONFIG_H
 
+#include <algorithm>
 #include <optional>
+#include <thread>
 
 #include "libnuraft/nuraft.hxx"
 #include "replicated-splinterdb/server/log_level.h"
@@ -16,7 +18,7 @@ struct replica_config {
           raft_port_(25000),
           client_port_(25001),
           addr_("localhost"),
-          asio_thread_pool_size_(10),
+          asio_thread_pool_size_(0),
           snapshot_frequency_(0),
           initialization_delay_ms_(250),
           initialization_retries_(20),
@@ -28,6 +30,7 @@ struct replica_config {
           splinterdb_cfg_(splinterdb_cfg),
           return_method_(nuraft::raft_params::blocking) {
         splinterdb_cfg_.data_cfg = &splinterdb_data_cfg_;
+        asio_thread_pool_size_ = std::max(std::thread::hardware_concurrency() / 2, 4U);
     }
 
     nuraft::raft_params::return_method_type get_return_method() const {

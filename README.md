@@ -24,7 +24,11 @@ The container will start in a shell in the `/work/build` directory. Run `./build
 
 ## TODOs
 
-- [ ] Client cache reset API
+- [ ] Track key-based miss rates in splinterdb
+- [ ] Intelligent thread pool sizing
+- [ ] Detailed latency breakdowns
+- [ ] clang-tidy
+- [ ] Switch over to protobuf or some async networking library and use nuraft::async_handler
 - [ ] YAML config parsing (see [yaml-cpp](https://github.com/jbeder/yaml-cpp/wiki/Tutorial))
 
 # Starting:

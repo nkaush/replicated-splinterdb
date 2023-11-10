@@ -42,7 +42,7 @@ DEFINE_string(seed, "",
               "The endpoint of the seed replica server that will introduce "
               "this server to the cluster. If empty, this server will start a "
               "new cluster.");
-DEFINE_int64(nthreads, 4, "The number of threads to use for RPC handling");
+DEFINE_int64(nthreads, 40, "The number of threads to use for RPC handling");
 
 DEFINE_validator(raftport, &validate_port);
 DEFINE_validator(clientport, &validate_port);
