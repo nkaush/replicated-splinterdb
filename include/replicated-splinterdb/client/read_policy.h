@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <cstdlib>
 #include <ctime>
+#include <memory>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -13,7 +15,8 @@ class read_policy {
   public:
     enum class algorithm { hash, round_robin, random };
 
-    read_policy(std::vector<int32_t> server_ids) : server_ids_(server_ids) {}
+    read_policy(const std::vector<int32_t>& server_ids)
+      : server_ids_(server_ids) {}
 
     virtual ~read_policy() = default;
 
@@ -40,23 +43,54 @@ class round_robin_read_policy : public read_policy {
     size_t rri_;
 };
 
-class random_read_policy : public read_policy {
+template<typename T>
+class range_based_read_policy : public read_policy {
+  public:
+    range_based_read_policy(const std::vector<int32_t>& server_ids, T min_range) 
+      : read_policy(server_ids), ranges_() {
+      T incr = std::numeric_limits<T>::max() / num_servers();
+      T next = min_range;
+
+      for (size_t i = 0; i < num_servers(); ++i) {
+        next += incr;
+        ranges_.push_back(next);
+      }
+
+      ranges_.back() = std::numeric_limits<T>::max();
+    }
+
+  protected:
+    std::vector<T> ranges_;
+
+    virtual T get_token(const std::string& key) = 0;
+
+    size_t next(const std::string& key) override {
+      T token = get_token(key);
+      for (size_t i = 0; i < ranges_.size(); ++i) {
+        if (token <= ranges_[i]) {
+          return i;
+        }
+      }
+
+      return (size_t)-1;
+    }
+};
+
+class random_read_policy : public range_based_read_policy<int> {
   public:
     random_read_policy(const std::vector<int32_t>& server_ids);
 
   protected:
-    size_t next(const std::string&) override;
+    int get_token(const std::string& key) override { return rand(); }
 };
 
-class hash_read_policy : public read_policy {
+class hash_read_policy : public range_based_read_policy<uint32_t> {
   public:
-    hash_read_policy(const std::vector<int32_t>& server_ids);
+    hash_read_policy(const std::vector<int32_t>& server_ids)
+      : range_based_read_policy(server_ids, 0) {}
 
   protected:
-    size_t next(const std::string& k) override;
-
-  private:
-    std::vector<uint32_t> ranges_;
+    uint32_t get_token(const std::string& key) override;
 };
 
 }  // namespace replicated_splinterdb

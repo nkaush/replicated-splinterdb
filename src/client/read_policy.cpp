@@ -17,36 +17,14 @@ size_t round_robin_read_policy::next(const std::string&) {
 }
 
 random_read_policy::random_read_policy(const std::vector<int32_t>& server_ids)
-    : read_policy(server_ids) {
+    : range_based_read_policy(server_ids, 0) {
     srand(time(nullptr));
 }
 
-size_t random_read_policy::next(const std::string&) {
-    return rand() % num_servers();
-}
-
-hash_read_policy::hash_read_policy(const std::vector<int32_t>& server_ids)
-    : read_policy(server_ids), ranges_() {
-    uint32_t incr = UINT32_MAX / num_servers();
-    uint32_t next = 0;
-    for (uint32_t i = 0; i < num_servers(); ++i) {
-        next += incr;
-        ranges_.push_back(next);
-    }
-
-    ranges_.back() = UINT32_MAX;
-}
-
-size_t hash_read_policy::next(const std::string& k) {
+uint32_t hash_read_policy::get_token(const std::string& k) {
     uint32_t hash;
     MurmurHash3_x86_32(k.data(), static_cast<int>(k.size()), MMHSEED, &hash);
-    for (size_t i = 0; i < ranges_.size(); ++i) {
-        if (hash <= ranges_[i]) {
-            return i;
-        }
-    }
-
-    return (size_t)-1;
+    return hash;
 }
 
 }  // namespace replicated_splinterdb
