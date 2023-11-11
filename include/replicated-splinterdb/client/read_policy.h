@@ -16,7 +16,7 @@ class read_policy {
     enum class algorithm { hash, round_robin, random };
 
     read_policy(const std::vector<int32_t>& server_ids)
-      : server_ids_(server_ids) {}
+        : server_ids_(server_ids) {}
 
     virtual ~read_policy() = default;
 
@@ -43,20 +43,25 @@ class round_robin_read_policy : public read_policy {
     size_t rri_;
 };
 
-template<typename T>
+template <typename T>
 class range_based_read_policy : public read_policy {
   public:
-    range_based_read_policy(const std::vector<int32_t>& server_ids, T min_range) 
-      : read_policy(server_ids), ranges_() {
-      T incr = std::numeric_limits<T>::max() / num_servers();
-      T next = min_range;
+    range_based_read_policy(const std::vector<int32_t>& server_ids,
+                            size_t num_tokens)
+        : read_policy(server_ids), ranges_() {
+        if (num_tokens == 0) {
+            throw std::invalid_argument("num_tokens cannot be 0");
+        }
+        T incr = std::numeric_limits<T>::max() /
+                 static_cast<T>(num_servers() * num_tokens);
+        T next = 0;
 
-      for (size_t i = 0; i < num_servers(); ++i) {
-        next += incr;
-        ranges_.push_back(next);
-      }
+        for (size_t i = 0; i < num_servers(); ++i) {
+            next += incr;
+            ranges_.push_back(next);
+        }
 
-      ranges_.back() = std::numeric_limits<T>::max();
+        ranges_.back() = std::numeric_limits<T>::max();
     }
 
   protected:
@@ -65,20 +70,21 @@ class range_based_read_policy : public read_policy {
     virtual T get_token(const std::string& key) = 0;
 
     size_t next(const std::string& key) override {
-      T token = get_token(key);
-      for (size_t i = 0; i < ranges_.size(); ++i) {
-        if (token <= ranges_[i]) {
-          return i;
+        T token = get_token(key);
+        for (size_t i = 0; i < ranges_.size(); ++i) {
+            if (token <= ranges_[i]) {
+                return i;
+            }
         }
-      }
 
-      return (size_t)-1;
+        return (size_t)-1;
     }
 };
 
 class random_read_policy : public range_based_read_policy<int> {
   public:
-    random_read_policy(const std::vector<int32_t>& server_ids);
+    random_read_policy(const std::vector<int32_t>& server_ids,
+                       size_t num_tokens);
 
   protected:
     int get_token(const std::string& key) override { return rand(); }
@@ -86,8 +92,8 @@ class random_read_policy : public range_based_read_policy<int> {
 
 class hash_read_policy : public range_based_read_policy<uint32_t> {
   public:
-    hash_read_policy(const std::vector<int32_t>& server_ids)
-      : range_based_read_policy(server_ids, 0) {}
+    hash_read_policy(const std::vector<int32_t>& server_ids, size_t num_tokens)
+        : range_based_read_policy(server_ids, num_tokens) {}
 
   protected:
     uint32_t get_token(const std::string& key) override;

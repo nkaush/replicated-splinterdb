@@ -43,3 +43,12 @@ add_custom_target(
     COMMAND ${CMAKE_MAKE_PROGRAM} LIBDIR=${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/libsplinterdb.so
     WORKING_DIRECTORY ${ReplicatedSplinterDB_SOURCE_DIR}/third-party/splinterdb
 )
+
+add_custom_target(
+    format COMMAND find 
+        ${ReplicatedSplinterDB_SOURCE_DIR}/src
+        ${ReplicatedSplinterDB_SOURCE_DIR}/apps
+        ${ReplicatedSplinterDB_SOURCE_DIR}/include
+        -type f "\\(" -iname \*.cpp -o -iname \*.hpp -o -iname \*.h "\\)"
+        | xargs clang-format -i
+)

@@ -16,8 +16,9 @@ size_t round_robin_read_policy::next(const std::string&) {
     return ret;
 }
 
-random_read_policy::random_read_policy(const std::vector<int32_t>& server_ids)
-    : range_based_read_policy(server_ids, 0) {
+random_read_policy::random_read_policy(const std::vector<int32_t>& server_ids,
+                                       size_t num_tokens)
+    : range_based_read_policy(server_ids, num_tokens) {
     srand(time(nullptr));
 }
 

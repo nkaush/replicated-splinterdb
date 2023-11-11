@@ -18,8 +18,8 @@ namespace replicated_splinterdb {
 using std::string;
 
 client::client(const string& host, uint16_t port,
-               read_policy::algorithm read_algo, uint64_t timeout_ms,
-               uint16_t num_retries, bool print_errors)
+               read_policy::algorithm read_algo, size_t rp_num_tokens,
+               uint64_t timeout_ms, uint16_t num_retries, bool print_errors)
     : clients_(),
       read_policy_(nullptr),
       num_retries_(num_retries),
@@ -75,10 +75,12 @@ client::client(const string& host, uint16_t port,
             read_policy_ = std::make_unique<round_robin_read_policy>(srv_ids);
             break;
         case read_policy::algorithm::hash:
-            read_policy_ = std::make_unique<hash_read_policy>(srv_ids);
+            read_policy_ =
+                std::make_unique<hash_read_policy>(srv_ids, rp_num_tokens);
             break;
         case read_policy::algorithm::random:
-            read_policy_ = std::make_unique<random_read_policy>(srv_ids);
+            read_policy_ =
+                std::make_unique<random_read_policy>(srv_ids, rp_num_tokens);
             break;
         default:
             throw std::runtime_error("Invalid read policy");
@@ -132,19 +134,17 @@ rpc_read_result client::get(const string& key) {
         .as<rpc_read_result>();
 }
 
-rpc_mutation_result client::put(const string& key, const string& value) {
+rpc_mutation_result client::retry_mutation(
+    const string& key, std::function<rpc_mutation_result()> f) {
     rpc_mutation_result result;
     for (uint16_t i = 0; i < num_retries_; ++i) {
-        result = get_leader_handle()
-                     .call(RPC_SPLINTERDB_PUT, key, value)
-                     .as<rpc_mutation_result>();
+        result = f();
 
         if (was_accepted(result)) {
             break;
         } else if (get_nuraft_return_code(result) == CMD_RESULT_WEIRD_CASE) {
-            string k(key.begin(), key.end());
-            std::cout << "WARNING: weird case. Verify that the key exists: "
-                      << k << std::endl;
+            std::cout << "WARNING: weird case. Verify that kvp was mutated: "
+                      << key << std::endl;
             std::get<1>(result) = 0;
             break;
         } else if (try_handle_leader_change(get_nuraft_return_code(result))) {
@@ -157,60 +157,29 @@ rpc_mutation_result client::put(const string& key, const string& value) {
     }
 
     return result;
+}
+
+rpc_mutation_result client::put(const string& key, const string& value) {
+    rpc::client& cl = get_leader_handle();
+    return retry_mutation(key, [&cl, key, value]() {
+        return cl.call(RPC_SPLINTERDB_PUT, key, value)
+            .as<rpc_mutation_result>();
+    });
 }
 
 rpc_mutation_result client::update(const string& key, const string& value) {
-    rpc_mutation_result result;
-    for (uint16_t i = 0; i < num_retries_; ++i) {
-        result = get_leader_handle()
-                     .call(RPC_SPLINTERDB_UPDATE, key, value)
-                     .as<rpc_mutation_result>();
-
-        if (was_accepted(result)) {
-            break;
-        } else if (get_nuraft_return_code(result) == CMD_RESULT_WEIRD_CASE) {
-            string k(key.begin(), key.end());
-            std::cout << "WARNING: weird case. Verify that the key exists: "
-                      << k << std::endl;
-            std::get<1>(result) = 0;
-            break;
-        } else if (try_handle_leader_change(get_nuraft_return_code(result))) {
-            if (print_errors_) {
-                std::cerr << "WARNING: leader changed, retrying..."
-                          << std::endl;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    }
-
-    return result;
+    rpc::client& cl = get_leader_handle();
+    return retry_mutation(key, [&cl, key, value]() {
+        return cl.call(RPC_SPLINTERDB_UPDATE, key, value)
+            .as<rpc_mutation_result>();
+    });
 }
 
 rpc_mutation_result client::del(const std::string& key) {
-    rpc_mutation_result result;
-    for (uint16_t i = 0; i < num_retries_; ++i) {
-        result = get_leader_handle()
-                     .call(RPC_SPLINTERDB_DELETE, key)
-                     .as<rpc_mutation_result>();
-
-        if (was_accepted(result)) {
-            break;
-        } else if (get_nuraft_return_code(result) == CMD_RESULT_WEIRD_CASE) {
-            string k(key.begin(), key.end());
-            std::cout << "WARNING: weird case. Verify that the key exists: "
-                      << k << std::endl;
-            std::get<1>(result) = 0;
-            break;
-        } else if (try_handle_leader_change(get_nuraft_return_code(result))) {
-            if (print_errors_) {
-                std::cerr << "WARNING: leader changed, retrying..."
-                          << std::endl;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    }
-
-    return result;
+    rpc::client& cl = get_leader_handle();
+    return retry_mutation(key, [&cl, key]() {
+        return cl.call(RPC_SPLINTERDB_DELETE, key).as<rpc_mutation_result>();
+    });
 }
 
 std::vector<std::tuple<int32_t, string>> client::get_all_servers() {

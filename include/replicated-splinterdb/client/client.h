@@ -18,8 +18,9 @@ class client {
     client& operator=(const client&) = delete;
 
     client(const std::string& host, uint16_t port,
-           read_policy::algorithm read_algo, uint64_t timeout_ms = 10000,
-           uint16_t num_retries = 3, bool print_errors = false);
+           read_policy::algorithm read_algo, size_t rp_num_tokens = 3,
+           uint64_t timeout_ms = 10000, uint16_t num_retries = 3,
+           bool print_errors = false);
 
     rpc_read_result get(const std::string& key);
 
@@ -47,6 +48,9 @@ class client {
     rpc::client& get_leader_handle();
 
     bool try_handle_leader_change(int32_t raft_result_code);
+
+    rpc_mutation_result retry_mutation(const std::string& key,
+                                       std::function<rpc_mutation_result()> f);
 };
 
 }  // namespace replicated_splinterdb
