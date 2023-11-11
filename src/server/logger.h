@@ -265,7 +265,7 @@ class SimpleLogger : public nuraft::logger {
         return msg;
     }
 
-    LoggerStream& stream(int level, nuraft::ptr<SimpleLogger> logger,
+    LoggerStream& stream(int level, std::shared_ptr<SimpleLogger> logger,
                          const char* file, const char* func, size_t line) {
         thread_local LoggerStream msg;
         msg.setLogInfo(level, logger.get(), file, func, line);

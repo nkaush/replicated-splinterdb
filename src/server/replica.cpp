@@ -8,9 +8,9 @@
 #include "replicated-splinterdb/server/splinterdb_wrapper.h"
 #include "splinterdb_state_machine.h"
 
-#define s_err _s_err(std::dynamic_pointer_cast<SimpleLogger>(logger_))
-#define s_info _s_info(std::dynamic_pointer_cast<SimpleLogger>(logger_))
-#define s_warn _s_warn(std::dynamic_pointer_cast<SimpleLogger>(logger_))
+#define S_ERR _s_err(std::dynamic_pointer_cast<SimpleLogger>(logger_))
+#define S_INFO _s_info(std::dynamic_pointer_cast<SimpleLogger>(logger_))
+#define S_WARN _s_warn(std::dynamic_pointer_cast<SimpleLogger>(logger_))
 
 namespace replicated_splinterdb {
 
@@ -51,7 +51,6 @@ replica::replica(const replica_config& config)
       spl_log_file_(nullptr),
       sm_(nullptr),
       smgr_(nullptr),
-      launcher_(),
       raft_instance_(nullptr) {
     if (!config_.server_id_) {
         throw std::invalid_argument("server_id must be set");
@@ -152,21 +151,21 @@ std::pair<std::unique_ptr<std::string>, int32_t> replica::read(slice&& key) {
     splinterdb_lookup_result_init(sm_->get_splinterdb_handle(), &result, 0,
                                   NULL);
 
-    int rc = splinterdb_lookup(sm_->get_splinterdb_handle(),
+    int retcode = splinterdb_lookup(sm_->get_splinterdb_handle(),
                                std::forward<slice>(key), &result);
-    if (rc) {
-        return {nullptr, rc};
+    if (retcode != 0) {
+        return {nullptr, retcode};
     }
 
     slice value;
-    rc = splinterdb_lookup_result_value(&result, &value);
-    if (rc) {
-        return {nullptr, rc};
+    retcode = splinterdb_lookup_result_value(&result, &value);
+    if (retcode != 0) {
+        return {nullptr, retcode};
     }
 
     return {std::make_unique<std::string>(static_cast<const char*>(value.data),
                                           static_cast<size_t>(value.length)),
-            rc};
+            retcode};
 }
 
 std::pair<cmd_result_code, std::string> replica::add_server(
@@ -180,9 +179,9 @@ std::pair<cmd_result_code, std::string> replica::add_server(
     const srv_config& srv_conf_to_add) {
     ptr<raft_result> ret = raft_instance_->add_srv(srv_conf_to_add);
     if (!ret->get_accepted()) {
-        s_err << "failed to add server: " << ret->get_result_code();
+        S_ERR << "failed to add server: " << ret->get_result_code();
     } else {
-        s_info << "add_server succeeded [id=" << srv_conf_to_add.get_id()
+        S_INFO << "add_server succeeded [id=" << srv_conf_to_add.get_id()
                << ", endpoint=" << srv_conf_to_add.get_endpoint() << "]";
     }
 

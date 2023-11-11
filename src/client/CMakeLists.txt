@@ -30,7 +30,7 @@ set_source_files_properties(
 )
 
 # Users of our libraries will need these include directories
-target_include_directories(replicated-splinterdb-client PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/include/client/")
+target_include_directories(replicated-splinterdb-client PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/include/")
 
 # Link the libraries to some other dependencies
 target_link_libraries(replicated-splinterdb-client rpc pthread)

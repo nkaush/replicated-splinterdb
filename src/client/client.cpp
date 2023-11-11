@@ -112,9 +112,9 @@ void client::trigger_cache_clear() {
 
 rpc::client& client::get_leader_handle() { return clients_.at(leader_id_); }
 
-bool client::try_handle_leader_change(int32_t raft_rc) {
-    if (raft_rc == CMD_RESULT_NOT_LEADER ||
-        raft_rc == CMD_RESULT_REQUEST_CANCELLED) {
+bool client::try_handle_leader_change(int32_t raft_result_code) {
+    if (raft_result_code == CMD_RESULT_NOT_LEADER ||
+        raft_result_code == CMD_RESULT_REQUEST_CANCELLED) {
         int32_t old_leader_id = leader_id_;
         leader_id_ = get_leader_id();
 
@@ -137,6 +137,7 @@ rpc_read_result client::get(const string& key) {
 rpc_mutation_result client::retry_mutation(
     const string& key, std::function<rpc_mutation_result()> f) {
     rpc_mutation_result result;
+    size_t delay_ms = 100;
     for (uint16_t i = 0; i < num_retries_; ++i) {
         result = f();
 
@@ -152,7 +153,8 @@ rpc_mutation_result client::retry_mutation(
                 std::cerr << "WARNING: leader changed, retrying..."
                           << std::endl;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
+            delay_ms *= 2;
         }
     }
 

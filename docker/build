@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-set -e
-
-cmake .. && make all spl-server spl-client -j6
-EXIT_CODE=$?

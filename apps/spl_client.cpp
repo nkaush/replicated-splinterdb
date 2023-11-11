@@ -10,20 +10,16 @@ DEFINE_string(e, "",
               "argument is empty, the client will run in interactive mode. "
               "Format: <command> <arg1> <arg2> ...");
 
-#ifndef _CLM_DEFINED
-#define _CLM_DEFINED (1)
-#define _CLM_GREEN "\033[32m"
-#define _CLM_END "\033[0m"
-#endif
+#define CLM_GREEN "\033[32m"
+#define CLM_END "\033[0m"
 
-using replicated_splinterdb::client;
 using replicated_splinterdb::rpc_mutation_result;
 
 static bool handle_mutation_result(rpc_mutation_result&& result);
 
-static std::vector<std::string> tokenize(const char* str, char c = ' ');
+static std::vector<std::string> tokenize(const char* str, char delim = ' ');
 
-static bool handle_command(rpc::client& c,
+static bool handle_command(rpc::client& client,
                            const std::vector<std::string>& tokens);
 
 bool handle_mutation_result(rpc_mutation_result&& result) {
@@ -42,18 +38,18 @@ bool handle_mutation_result(rpc_mutation_result&& result) {
     return false;
 }
 
-std::vector<std::string> tokenize(const char* str, char c) {
+std::vector<std::string> tokenize(const char* str, char delim) {
     std::vector<std::string> tokens;
     do {
         const char* begin = str;
-        while (*str != c && *str) str++;
-        if (begin != str) tokens.push_back(std::string(begin, str));
+        while (*str != delim && *str != 0) str++;
+        if (begin != str) tokens.emplace_back(begin, str);
     } while (0 != *str++);
 
     return tokens;
 }
 
-static bool handle_command(client& c, const std::vector<std::string>& tokens) {
+static bool handle_command(replicated_splinterdb::client& client, const std::vector<std::string>& tokens) {
     if (tokens.empty()) {
         return false;
     }
@@ -63,16 +59,16 @@ static bool handle_command(client& c, const std::vector<std::string>& tokens) {
                    [](unsigned char c) { return std::tolower(c); });
 
     if (cmd == "put" && tokens.size() >= 3) {
-        auto res = c.put(tokens[1], tokens[2]);
+        auto res = client.put(tokens[1], tokens[2]);
         return handle_mutation_result(std::move(res));
     } else if (cmd == "update" && tokens.size() >= 3) {
-        auto res = c.update(tokens[1], tokens[2]);
+        auto res = client.update(tokens[1], tokens[2]);
         return handle_mutation_result(std::move(res));
     } else if (cmd == "delete" && tokens.size() >= 2) {
-        auto res = c.del(tokens[1]);
+        auto res = client.del(tokens[1]);
         return handle_mutation_result(std::move(res));
     } else if (cmd == "get" && tokens.size() >= 2) {
-        auto [value, spl_rc] = c.get(tokens[1]);
+        auto [value, spl_rc] = client.get(tokens[1]);
 
         if (spl_rc == 0) {
             std::cout << "value: " << std::string(value.begin(), value.end())
@@ -84,9 +80,9 @@ static bool handle_command(client& c, const std::vector<std::string>& tokens) {
         }
     } else if (cmd == "ls") {
         std::vector<std::tuple<int32_t, std::string>> srvs =
-            c.get_all_servers();
+            client.get_all_servers();
 
-        int32_t leader_id = c.get_leader_id();
+        int32_t leader_id = client.get_leader_id();
 
         std::cout << "server id : client-facing endpoint" << std::endl;
         for (const auto& [srv_id, endpoint] : srvs) {
@@ -100,10 +96,10 @@ static bool handle_command(client& c, const std::vector<std::string>& tokens) {
 
         return true;
     } else if (cmd == "dumpcache" && tokens.size() >= 2) {
-        c.trigger_cache_dumps(tokens[1]);
+        client.trigger_cache_dumps(tokens[1]);
         return true;
     } else if (cmd == "clearcache") {
-        c.trigger_cache_clear();
+        client.trigger_cache_clear();
         return true;
     } else if (cmd == "help") {
         std::cout << "Commands:" << std::endl;
@@ -134,7 +130,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    auto pos = FLAGS_endpoint.find(":");
+    auto pos = FLAGS_endpoint.find(':');
     if (pos == std::string::npos) {
         std::cerr << "ERROR: flag '-endpoint' has invalid format, "
                   << "expected <host>:<port>" << std::endl;
@@ -149,35 +145,35 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    client c(host, static_cast<uint16_t>(port),
+    replicated_splinterdb::client client(host, static_cast<uint16_t>(port),
              replicated_splinterdb::read_policy::algorithm::hash, 3);
 
     if (!FLAGS_e.empty()) {
         auto tokens(tokenize(FLAGS_e.c_str()));
-        return handle_command(c, tokens) ? 0 : 1;
+        return handle_command(client, tokens) ? 0 : 1;
     }
 
     std::string prompt = "spl-client> ";
-    char cmd[1000];
-    int rc = 0;
+    std::array<char, 1000> cmd;
+    int retcode = 0;
 
     while (true) {
 #if defined(__linux__) || defined(__APPLE__)
-        std::cout << _CLM_GREEN << prompt << _CLM_END;
+        std::cout << CLM_GREEN << prompt << CLM_END;
 #else
         std::cout << prompt;
 #endif
-        if (!std::cin.getline(cmd, 1000)) {
+        if (!std::cin.getline(cmd.data(), 1000)) {
             break;
         }
-        auto tokens(tokenize(cmd));
+        auto tokens(tokenize(cmd.data()));
 
         if (tokens[0] == "exit") {
             break;
         } else {
-            rc = handle_command(c, tokens) ? 0 : 1;
+            retcode = handle_command(client, tokens) ? 0 : 1;
         }
     }
 
-    return rc;
+    return retcode;
 }

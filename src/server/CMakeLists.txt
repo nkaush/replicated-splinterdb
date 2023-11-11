@@ -28,7 +28,7 @@ target_compile_options(
 )
 
 # Users of our libraries will need these include directories
-target_include_directories(replicated-splinterdb-server PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/include/replicated-splinterdb/server/")
+target_include_directories(replicated-splinterdb-client PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/include/")
 
 # Link the libraries to some other dependencies
 target_link_libraries(replicated-splinterdb-server nuraft.a rpc splinterdb pthread)

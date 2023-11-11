@@ -15,8 +15,8 @@ class read_policy {
   public:
     enum class algorithm { hash, round_robin, random };
 
-    read_policy(const std::vector<int32_t>& server_ids)
-        : server_ids_(server_ids) {}
+    explicit read_policy(const std::vector<int32_t>& server_ids)
+      : server_ids_(server_ids) {}
 
     virtual ~read_policy() = default;
 
@@ -33,8 +33,8 @@ class read_policy {
 
 class round_robin_read_policy : public read_policy {
   public:
-    round_robin_read_policy(const std::vector<int32_t>& server_ids)
-        : read_policy(server_ids), rri_(0) {}
+    explicit round_robin_read_policy(const std::vector<int32_t>& server_ids)
+      : read_policy(server_ids), rri_(0) {}
 
   protected:
     size_t next(const std::string&) override;

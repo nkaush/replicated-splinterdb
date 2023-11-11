@@ -13,16 +13,16 @@ class splinterdb_state_machine : public nuraft::state_machine {
   private:
     using Base = nuraft::state_machine;
 
+  public:
     splinterdb_state_machine(const splinterdb_state_machine&) = delete;
 
     splinterdb_state_machine& operator=(const splinterdb_state_machine&) =
         delete;
 
-  public:
-    splinterdb_state_machine(const splinterdb_config& config,
-                             bool disable_snapshots = false);
+    explicit splinterdb_state_machine(const splinterdb_config& config,
+                                      bool disable_snapshots = false);
 
-    ~splinterdb_state_machine();
+    ~splinterdb_state_machine() override;
 
     /**
      * Commit the given Raft log.
@@ -80,7 +80,7 @@ class splinterdb_state_machine : public nuraft::state_machine {
      * @param is_first_obj `true` if this is the first object.
      * @param is_last_obj `true` if this is the last object.
      */
-    void save_logical_snp_obj(nuraft::snapshot& s, nuraft::ulong& obj_id,
+    void save_logical_snp_obj(nuraft::snapshot& snp, nuraft::ulong& obj_id,
                               nuraft::buffer& data, bool is_first_obj,
                               bool is_last_obj) override;
 
@@ -90,7 +90,7 @@ class splinterdb_state_machine : public nuraft::state_machine {
      * @param s Snapshot instance to apply.
      * @returm `true` on success.
      */
-    bool apply_snapshot(nuraft::snapshot& s) override;
+    bool apply_snapshot(nuraft::snapshot& snp) override;
 
     /**
      * Read the given snapshot object.
@@ -113,7 +113,7 @@ class splinterdb_state_machine : public nuraft::state_machine {
      * @param[out] is_last_obj Set `true` if this is the last object.
      * @return Negative number if failed.
      */
-    int read_logical_snp_obj(nuraft::snapshot& s, void*& user_snp_ctx,
+    int read_logical_snp_obj(nuraft::snapshot& snp, void*& user_snp_ctx,
                              nuraft::ulong obj_id,
                              nuraft::ptr<nuraft::buffer>& data_out,
                              bool& is_last_obj) override;
@@ -158,7 +158,7 @@ class splinterdb_state_machine : public nuraft::state_machine {
      *                  snapshot creation is done.
      */
     void create_snapshot(
-        nuraft::snapshot& s,
+        nuraft::snapshot& snp,
         nuraft::async_result<bool>::handler_type& when_done) override;
 
     /**
@@ -175,7 +175,7 @@ class splinterdb_state_machine : public nuraft::state_machine {
 
     using Base::allow_leadership_transfer;
 
-    inline splinterdb* get_splinterdb_handle() const { return spl_handle_; }
+    [[nodiscard]] inline splinterdb* get_splinterdb_handle() const { return spl_handle_; }
 
   private:
     splinterdb* spl_handle_;

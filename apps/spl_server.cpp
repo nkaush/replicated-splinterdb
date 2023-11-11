@@ -3,17 +3,17 @@
 
 #include <iostream>
 
-#include "replica_config.h"
 #include "replicated-splinterdb/common/rpc.h"
+#include "replicated-splinterdb/server/replica_config.h"
+#include "replicated-splinterdb/server/server.h"
 #include "rpc/client.h"
-#include "server.h"
 
 static bool validate_port(const char* flagname, int32 value) {
     if (value > 0 && value < 32768) {  // value is ok
         return true;
     }
 
-    fprintf(stderr, "ERROR: Invalid value for -%s (%d)", flagname, (int)value);
+    fprintf(stderr, "ERROR: Invalid value for -%s (%d)", flagname, static_cast<int>(value));
     fprintf(stderr, ": port must be in [1, 32768)\n");
     return false;
 }
@@ -23,7 +23,7 @@ static bool validate_nthreads(const char* flagname, int64 value) {
         return true;
     }
 
-    fprintf(stderr, "ERROR: Invalid value for -%s (%d)", flagname, (int)value);
+    fprintf(stderr, "ERROR: Invalid value for -%s (%d)", flagname, static_cast<int>(value));
     fprintf(stderr, ": must use between 4 and 50 threads\n");
     return false;
 }
@@ -74,12 +74,12 @@ static void try_join_cluster(const replica_config& cfg) {
     }
 
     auto checked_port = static_cast<uint16_t>(join_srv_port);
-    rpc::client cl{join_srv_host, checked_port};
+    rpc::client client{join_srv_host, checked_port};
 
     std::cout << "Attempting to join cluster at " << FLAGS_seed << " ... "
               << std::flush;
 
-    auto [rc, msg] = cl.call(RPC_JOIN_REPLICA_GROUP, cfg.server_id_,
+    auto [rc, msg] = client.call(RPC_JOIN_REPLICA_GROUP, cfg.server_id_,
                              cfg.addr_ + ":" + std::to_string(cfg.raft_port_),
                              cfg.addr_ + ":" + std::to_string(cfg.client_port_))
                          .as<std::tuple<int32_t, std::string>>();
@@ -102,9 +102,9 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    uint16_t raft_port = static_cast<uint16_t>(FLAGS_raftport);
-    uint16_t client_port = static_cast<uint16_t>(FLAGS_clientport);
-    uint16_t join_port = static_cast<uint16_t>(FLAGS_joinport);
+    auto raft_port = static_cast<uint16_t>(FLAGS_raftport);
+    auto client_port = static_cast<uint16_t>(FLAGS_clientport);
+    auto join_port = static_cast<uint16_t>(FLAGS_joinport);
 
     // Initialize data configuration, using default key-comparison handling.
     data_config splinter_data_cfg;
@@ -119,22 +119,22 @@ int main(int argc, char** argv) {
     splinterdb_cfg.cache_size = (FLAGS_cachesize * 1024 * 1024);
     splinterdb_cfg.data_cfg = &splinter_data_cfg;
 
-    splinterdb_cfg.use_stats = true;
+    splinterdb_cfg.use_stats = 1U;
     splinterdb_cfg.cache_use_stats = true;
 
     replica_config cfg{splinter_data_cfg, splinterdb_cfg};
     cfg.server_id_ = FLAGS_serverid;
 
-    char hostnamebuf[100];
-    gethostname(hostnamebuf, sizeof(hostnamebuf));
-    cfg.addr_ = hostnamebuf;
+    std::array<char, 100> hostnamebuf;
+    gethostname(hostnamebuf.data(), sizeof(hostnamebuf));
+    cfg.addr_ = hostnamebuf.data();
     cfg.raft_port_ = raft_port;
     cfg.client_port_ = client_port;
 
     cfg.log_level_ = LogLevel::TRACE;
     cfg.display_level_ = LogLevel::DISABLED;
 
-    server s{client_port, join_port, cfg};
+    server srv{client_port, join_port, cfg};
     std::cout << "Listening for replication RPCs on port " << cfg.raft_port_
               << std::endl;
 
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
         try_join_cluster(cfg);
     }
 
-    s.run(FLAGS_nthreads);
+    srv.run(FLAGS_nthreads);
 
     return 0;
 }

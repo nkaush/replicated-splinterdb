@@ -10,9 +10,6 @@
 #include <cstring>
 
 extern "C" {
-#include <stdbool.h>
-#define _Bool bool
-
 #include "splinterdb/default_data_config.h"
 #include "splinterdb/splinterdb.h"
 }

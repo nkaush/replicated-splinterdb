@@ -84,7 +84,7 @@ class replica {
     nuraft::raft_launcher launcher_;
     nuraft::ptr<nuraft::raft_server> raft_instance_;
 
-    void default_raft_params_init(nuraft::raft_params& params);
+    static void default_raft_params_init(nuraft::raft_params& params);
 
     void initialize();
 

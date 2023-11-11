@@ -16,14 +16,14 @@ using nuraft::snapshot;
 using nuraft::ulong;
 
 splinterdb_state_machine::splinterdb_state_machine(
-    const splinterdb_config& cfg_ref, bool disable_snapshots)
+    const splinterdb_config& config, bool disable_snapshots)
     : spl_handle_(nullptr),
       last_committed_idx_(0),
       commit_thread_initialized_(false),
       snapshots_(),
       snapshots_lock_(),
       disable_snapshots_(disable_snapshots) {
-    if (splinterdb_create(&cfg_ref, &spl_handle_)) {
+    if (splinterdb_create(&config, &spl_handle_)) {
         throw std::runtime_error("Failed to create SplinterDB instance.");
     }
 }
@@ -92,21 +92,21 @@ bool splinterdb_state_machine::apply_snapshot(snapshot& s) {
     throw std::runtime_error("Not implemented.");
 }
 
-int splinterdb_state_machine::read_logical_snp_obj(nuraft::snapshot& s,
-                                                   void*& user_snp_ctx,
-                                                   ulong obj_id,
-                                                   ptr<buffer>& data_out,
-                                                   bool& is_last_obj) {
+int splinterdb_state_machine::read_logical_snp_obj(nuraft::snapshot& /*snp*/,
+                                                   void*& /*user_snp_ctx*/,
+                                                   ulong /*obj_id*/,
+                                                   ptr<buffer>& /*data_out*/,
+                                                   bool& /*is_last_obj*/) {
     throw std::runtime_error("Not implemented.");
 }
 
-void splinterdb_state_machine::free_user_snp_ctx(void*& user_snp_ctx) {
+void splinterdb_state_machine::free_user_snp_ctx(void*& /*user_snp_ctx*/) {
     throw std::runtime_error("Not implemented.");
 }
 
 nuraft::ptr<nuraft::snapshot> splinterdb_state_machine::last_snapshot() {
     // Just return the latest snapshot.
-    std::lock_guard<std::mutex> ll(snapshots_lock_);
+    std::lock_guard<std::mutex> snp_lock(snapshots_lock_);
     auto entry = snapshots_.rbegin();
     if (entry == snapshots_.rend()) return nullptr;
 
@@ -119,7 +119,7 @@ ulong splinterdb_state_machine::last_commit_index() {
 }
 
 void splinterdb_state_machine::create_snapshot(
-    snapshot& s, async_result<bool>::handler_type& when_done) {
+    snapshot& snp, async_result<bool>::handler_type& /*when_done*/) {
     throw std::runtime_error("Not implemented.");
 }
 
