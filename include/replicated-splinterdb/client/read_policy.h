@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+
 namespace replicated_splinterdb {
 
 class read_policy {
@@ -52,16 +54,14 @@ class range_based_read_policy : public read_policy {
         if (num_tokens == 0) {
             throw std::invalid_argument("num_tokens cannot be 0");
         }
-        T incr = std::numeric_limits<T>::max() /
-                 static_cast<T>(num_servers() * num_tokens);
+        size_t total_tokens = num_servers() * num_tokens;
+        T incr = std::numeric_limits<T>::max() / static_cast<T>(total_tokens);
         T next = 0;
 
-        for (size_t i = 0; i < num_servers(); ++i) {
+        for (size_t i = 0; i < total_tokens; ++i) {
             next += incr;
             ranges_.push_back(next);
         }
-
-        ranges_.back() = std::numeric_limits<T>::max();
     }
 
   protected:
@@ -73,7 +73,7 @@ class range_based_read_policy : public read_policy {
         T token = get_token(key);
         for (size_t i = 0; i < ranges_.size(); ++i) {
             if (token <= ranges_[i]) {
-                return i;
+                return i % num_servers();
             }
         }
 
