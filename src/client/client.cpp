@@ -101,7 +101,6 @@ void client::trigger_cache_dumps(const string& directory) {
 void client::trigger_cache_clear() {
     for (auto& [id, c] : clients_) {
         bool result = c.call(RPC_SPLINTERDB_CLEARCACHE).as<bool>();
-        std::cout << "moved past RPC call!" << std::endl;
 
         if (!result) {
             std::cerr << "WARNING: failed to clear cache on server " << id
