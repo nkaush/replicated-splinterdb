@@ -27,6 +27,11 @@ target_compile_options(
     -Wno-gcc-compat
 )
 
+set_source_files_properties(
+    "${ReplicatedSplinterDB_SOURCE_DIR}/src/server/logger.cpp"
+    PROPERTIES COMPILE_FLAGS "-Wno-sign-conversion -Wshorten-64-to-32"
+)
+
 # Users of our libraries will need these include directories
 target_include_directories(replicated-splinterdb-client PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/include/")
 

@@ -703,12 +703,12 @@ int SimpleLogger::LogElem::write(size_t _len, char* msg) {
     return 0;
 }
 
-int SimpleLogger::LogElem::flush(std::ofstream& fs) {
+int SimpleLogger::LogElem::flush(std::ofstream& ofs) {
     Status exp = DIRTY;
     Status val = FLUSHING;
     if (!status.compare_exchange_strong(exp, val)) return -1;
 
-    fs.write(ctx, len);
+    ofs.write(ctx, len);
 
     status.store(LogElem::CLEAN);
     return 0;
