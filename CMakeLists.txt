@@ -15,16 +15,19 @@ set(CMAKE_CXX_STANDARD 20)
 link_directories("${CMAKE_CURRENT_BINARY_DIR}")
 link_directories("${CMAKE_CURRENT_BINARY_DIR}/third-party/nuraft")
 
-# Include directories
-include_directories("${ReplicatedSplinterDB_SOURCE_DIR}/include")
-include_directories("${NuRaft_SOURCE_DIR}/include/")
-include_directories("${rpc_SOURCE_DIR}/include/")
-include_directories("${ReplicatedSplinterDB_SOURCE_DIR}/third-party/splinterdb/include/")
-
 # Include subdirectories with library source code 
 set(DISABLE_SSL 1)
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/third-party/nuraft" EXCLUDE_FROM_ALL)
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/third-party/rpclib" EXCLUDE_FROM_ALL)
+
+# Include directories
+include_directories(
+    "${ReplicatedSplinterDB_SOURCE_DIR}/include"
+    "${NuRaft_SOURCE_DIR}/include/"
+    "${rpc_SOURCE_DIR}/include/"
+    "${ReplicatedSplinterDB_SOURCE_DIR}/third-party/splinterdb/include/"
+)
+
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/apps" EXCLUDE_FROM_ALL)
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/src/client" EXCLUDE_FROM_ALL)
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/src/server" EXCLUDE_FROM_ALL)

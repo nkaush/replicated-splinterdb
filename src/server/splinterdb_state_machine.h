@@ -175,7 +175,9 @@ class splinterdb_state_machine : public nuraft::state_machine {
 
     using Base::allow_leadership_transfer;
 
-    [[nodiscard]] inline splinterdb* get_splinterdb_handle() const { return spl_handle_; }
+    [[nodiscard]] inline splinterdb* get_splinterdb_handle() const {
+        return spl_handle_;
+    }
 
   private:
     splinterdb* spl_handle_;

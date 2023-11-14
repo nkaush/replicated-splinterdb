@@ -13,7 +13,8 @@ static bool validate_port(const char* flagname, int32 value) {
         return true;
     }
 
-    fprintf(stderr, "ERROR: Invalid value for -%s (%d)", flagname, static_cast<int>(value));
+    fprintf(stderr, "ERROR: Invalid value for -%s (%d)", flagname,
+            static_cast<int>(value));
     fprintf(stderr, ": port must be in [1, 32768)\n");
     return false;
 }
@@ -23,7 +24,8 @@ static bool validate_nthreads(const char* flagname, int64 value) {
         return true;
     }
 
-    fprintf(stderr, "ERROR: Invalid value for -%s (%d)", flagname, static_cast<int>(value));
+    fprintf(stderr, "ERROR: Invalid value for -%s (%d)", flagname,
+            static_cast<int>(value));
     fprintf(stderr, ": must use between 4 and 50 threads\n");
     return false;
 }
@@ -79,10 +81,12 @@ static void try_join_cluster(const replica_config& cfg) {
     std::cout << "Attempting to join cluster at " << FLAGS_seed << " ... "
               << std::flush;
 
-    auto [rc, msg] = client.call(RPC_JOIN_REPLICA_GROUP, cfg.server_id_,
-                             cfg.addr_ + ":" + std::to_string(cfg.raft_port_),
-                             cfg.addr_ + ":" + std::to_string(cfg.client_port_))
-                         .as<std::tuple<int32_t, std::string>>();
+    auto [rc, msg] =
+        client
+            .call(RPC_JOIN_REPLICA_GROUP, cfg.server_id_,
+                  cfg.addr_ + ":" + std::to_string(cfg.raft_port_),
+                  cfg.addr_ + ":" + std::to_string(cfg.client_port_))
+            .as<std::tuple<int32_t, std::string>>();
     std::cout << msg << " (rc=" << rc << ")" << std::endl;
 
     if (rc != 0) {

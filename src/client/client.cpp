@@ -78,9 +78,13 @@ client::client(const string& host, uint16_t port,
             read_policy_ =
                 std::make_unique<hash_read_policy>(srv_ids, rp_num_tokens);
             break;
-        case read_policy::algorithm::random:
+        case read_policy::algorithm::random_token:
+            read_policy_ = std::make_unique<random_token_read_policy>(
+                srv_ids, rp_num_tokens);
+            break;
+        case read_policy::algorithm::random_uniform:
             read_policy_ =
-                std::make_unique<random_read_policy>(srv_ids, rp_num_tokens);
+                std::make_unique<random_uniform_read_policy>(srv_ids);
             break;
         default:
             throw std::runtime_error("Invalid read policy");

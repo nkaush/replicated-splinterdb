@@ -152,7 +152,7 @@ std::pair<std::unique_ptr<std::string>, int32_t> replica::read(slice&& key) {
                                   NULL);
 
     int retcode = splinterdb_lookup(sm_->get_splinterdb_handle(),
-                               std::forward<slice>(key), &result);
+                                    std::forward<slice>(key), &result);
     if (retcode != 0) {
         return {nullptr, retcode};
     }

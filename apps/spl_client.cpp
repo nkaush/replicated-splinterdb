@@ -49,7 +49,8 @@ std::vector<std::string> tokenize(const char* str, char delim) {
     return tokens;
 }
 
-static bool handle_command(replicated_splinterdb::client& client, const std::vector<std::string>& tokens) {
+static bool handle_command(replicated_splinterdb::client& client,
+                           const std::vector<std::string>& tokens) {
     if (tokens.empty()) {
         return false;
     }
@@ -145,8 +146,9 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    replicated_splinterdb::client client(host, static_cast<uint16_t>(port),
-             replicated_splinterdb::read_policy::algorithm::hash, 3);
+    replicated_splinterdb::client client(
+        host, static_cast<uint16_t>(port),
+        replicated_splinterdb::read_policy::algorithm::hash, 3);
 
     if (!FLAGS_e.empty()) {
         auto tokens(tokenize(FLAGS_e.c_str()));
