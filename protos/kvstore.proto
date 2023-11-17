@@ -1,0 +1,90 @@
+syntax = "proto2";
+
+import "google/protobuf/empty.proto";
+
+/////////////////////////////////////////////////////
+//  The following messages are KV-Store DEPENDENT  //
+/////////////////////////////////////////////////////
+
+// An opaque result type for all kv-store operations. Users will 
+// define bindings to serialize and deserialize the kv-store's result
+// to and from bytes.
+message KVStoreResult {
+    required bytes result = 1;
+}
+
+// The result of a kv-store mutation
+message MutationResponse {
+    required ReplicationResult repl_result = 1;
+    optional KVStoreResult kvstore_result = 2;
+}
+
+// The result of a read to the kv-store
+message ReadResponse {
+    optional Value value = 1;
+    optional KVStoreResult kvstore_result = 2;
+}
+
+/////////////////////////////////////////////////////
+// The following messages are KV-Store INDEPENDENT //
+/////////////////////////////////////////////////////
+
+message Key {
+    required bytes key = 1;
+}
+
+message Value {
+    required bytes value = 1;
+}
+
+message KVPair {
+    required Key key = 1;
+    required Value value = 2;
+}
+
+// The NuRaft data describing the result of replication
+message ReplicationResult {
+    required int32 rc = 1;
+    required string msg = 2;
+}
+
+message ServerID {
+    required int32 id = 1;
+}
+
+message Endpoint {
+    required string server_id = 1;
+}
+
+message ClientFacingEndpoint {
+    required ServerID server_id = 1;
+    required Endpoint client_endpoint = 2;
+}
+
+message ClusterEndpoints {
+    repeated ClientFacingEndpoint endpoints = 1;
+}
+
+message ServerEndpoint {
+    required ServerID server_id = 1;
+    required Endpoint raft_endpoint = 2;
+    required Endpoint client_endpoint = 3;
+}
+
+service ReplicatedKVStore {
+    rpc Get (Key) returns (ReadResponse) {}
+
+    rpc Put (KVPair) returns (MutationResponse) {}
+
+    rpc Update (KVPair) returns (MutationResponse) {}
+
+    rpc Delete (Key) returns (MutationResponse) {}
+
+    rpc GetLeaderID (google.protobuf.Empty) returns (ServerID) {}
+
+    rpc GetClusterEndpoints (google.protobuf.Empty) returns (ClusterEndpoints) {}
+}
+
+service RaftCluster {
+    rpc JoinReplicaSet (ServerEndpoint) returns (ReplicationResult) {}
+}

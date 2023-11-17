@@ -1,15 +1,47 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.24)
 
 project(ReplicatedSplinterDB
         VERSION 1.0
         DESCRIPTION "Replicating SplinterDB with Raft"
         LANGUAGES CXX)
 
-set(CMAKE_BUILD_TYPE Release)
+option(USE_SYSTEM_GRPC "Use system installed gRPC" OFF)
 
-# Let's ensure -std=c++xx instead of -std=g++xx
+set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
+set(ABSL_PROPAGATE_CXX_STD ON)
+set(gRPC_INSTALL ON)
+set(gRPC_PROTOBUF_PROVIDER package)
+set(gRPC_PROTOBUF_PACKAGE_TYPE MODULE)
+set(HAS_SYSTEM_PROTOBUF true)
+
+find_package(Protobuf REQUIRED)
+
+if(USE_SYSTEM_GRPC)
+    # Find system-installed gRPC
+    find_package(gRPC CONFIG REQUIRED)
+else()
+    # Build gRPC using FetchContent
+    include(FetchContent)
+    set(FETCHCONTENT_QUIET OFF)
+    FetchContent_Declare(
+        gRPC
+        GIT_REPOSITORY https://github.com/grpc/grpc
+        GIT_TAG        v1.54.3
+        OVERRIDE_FIND_PACKAGE
+        EXCLUDE_FROM_ALL
+    )
+    FetchContent_MakeAvailable(gRPC)
+
+    find_package(Protobuf REQUIRED)
+
+    set(protobuf_MODULE_COMPATIBLE ON CACHE BOOL "")
+    FetchContent_GetProperties(gRPC SOURCE_DIR Protobuf_SOURCE_DIR)
+    include(${Protobuf_SOURCE_DIR}/cmake/protobuf.cmake)
+endif()
+
+add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/protos")
 
 # Import library shared objects and include directories
 link_directories("${CMAKE_CURRENT_BINARY_DIR}")

@@ -15,3 +15,9 @@ set_target_properties(spl-server PROPERTIES LINK_FLAGS_RELEASE -s)
 add_executable(spl-client spl_client.cpp)
 target_link_libraries(spl-client replicated-splinterdb-client gflags)
 set_target_properties(spl-client PROPERTIES LINK_FLAGS_RELEASE -s)
+
+add_executable(grpc_server grpc_server.cpp)
+target_link_libraries(grpc_server helloworld grpc++)
+
+add_executable(grpc_client grpc_client.cpp)
+target_link_libraries(grpc_client helloworld grpc++)
