@@ -1,21 +1,20 @@
-syntax = "proto2";
+syntax = "proto3";
 
-import "google/protobuf/empty.proto";
+package kvstore;
 
-/////////////////////////////////////////////////////
-//  The following messages are KV-Store DEPENDENT  //
-/////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//               The following messages are KV-Store DEPENDENT                //
+////////////////////////////////////////////////////////////////////////////////
 
-// An opaque result type for all kv-store operations. Users will 
-// define bindings to serialize and deserialize the kv-store's result
-// to and from bytes.
+// An opaque result type for all kv-store operations. Users will define bindings
+// to serialize and deserialize the kv-store's result to and from bytes.
 message KVStoreResult {
-    required bytes result = 1;
+    bytes result = 1;
 }
 
 // The result of a kv-store mutation
 message MutationResponse {
-    required ReplicationResult repl_result = 1;
+    ReplicationResult repl_result = 1;
     optional KVStoreResult kvstore_result = 2;
 }
 
@@ -25,40 +24,42 @@ message ReadResponse {
     optional KVStoreResult kvstore_result = 2;
 }
 
-/////////////////////////////////////////////////////
-// The following messages are KV-Store INDEPENDENT //
-/////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//              The following messages are KV-Store INDEPENDENT               //
+////////////////////////////////////////////////////////////////////////////////
+
+message Empty {}
 
 message Key {
-    required bytes key = 1;
+    bytes key = 1;
 }
 
 message Value {
-    required bytes value = 1;
+    bytes value = 1;
 }
 
 message KVPair {
-    required Key key = 1;
-    required Value value = 2;
+    Key key = 1;
+    Value value = 2;
 }
 
 // The NuRaft data describing the result of replication
 message ReplicationResult {
-    required int32 rc = 1;
-    required string msg = 2;
+    int32 rc = 1;
+    string msg = 2;
 }
 
 message ServerID {
-    required int32 id = 1;
+    int32 id = 1;
 }
 
 message Endpoint {
-    required string server_id = 1;
+    string server_id = 1;
 }
 
 message ClientFacingEndpoint {
-    required ServerID server_id = 1;
-    required Endpoint client_endpoint = 2;
+    ServerID server_id = 1;
+    Endpoint client_endpoint = 2;
 }
 
 message ClusterEndpoints {
@@ -66,9 +67,9 @@ message ClusterEndpoints {
 }
 
 message ServerEndpoint {
-    required ServerID server_id = 1;
-    required Endpoint raft_endpoint = 2;
-    required Endpoint client_endpoint = 3;
+    ServerID server_id = 1;
+    Endpoint raft_endpoint = 2;
+    Endpoint client_endpoint = 3;
 }
 
 service ReplicatedKVStore {
@@ -80,9 +81,9 @@ service ReplicatedKVStore {
 
     rpc Delete (Key) returns (MutationResponse) {}
 
-    rpc GetLeaderID (google.protobuf.Empty) returns (ServerID) {}
+    rpc GetLeaderID (Empty) returns (ServerID) {}
 
-    rpc GetClusterEndpoints (google.protobuf.Empty) returns (ClusterEndpoints) {}
+    rpc GetClusterEndpoints (Empty) returns (ClusterEndpoints) {}
 }
 
 service RaftCluster {

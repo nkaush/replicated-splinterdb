@@ -33,4 +33,4 @@ set_source_files_properties(
 )
 
 # Link the libraries to some other dependencies
-target_link_libraries(replicated-splinterdb-server nuraft.a rpc splinterdb pthread)
+target_link_libraries(replicated-splinterdb-server nuraft.a rpc splinterdb pthread grpc++ kvstoreapi)

@@ -21,11 +21,10 @@ target_include_directories(kvstoreapi PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 # Compile protobuf and grpc files in helloworld target to cpp
 cmake_policy(SET CMP0026 OLD)
 get_target_property(grpc_cpp_plugin_location grpc_cpp_plugin LOCATION)
+cmake_policy(SET CMP0026 NEW)
 
 protobuf_generate(TARGET helloworld LANGUAGE cpp PROTOS ${HELLOWORLD_PROTO_FILES})
 protobuf_generate(TARGET helloworld LANGUAGE grpc GENERATE_EXTENSIONS .grpc.pb.h .grpc.pb.cc PLUGIN "protoc-gen-grpc=${grpc_cpp_plugin_location}")
 
 protobuf_generate(TARGET kvstoreapi LANGUAGE cpp PROTOS ${KVSTORE_PROTO_FILES})
-protobuf_generate(TARGET kvstoreapi LANGUAGE grpc GENERATE_EXTENSIONS .grpc.pb.h .grpc.pb.cc PLUGIN "protoc-gen-grpc=${grpc_cpp_plugin_location}")
-
-cmake_policy(SET CMP0026 NEW)
+protobuf_generate(TARGET kvstoreapi LANGUAGE grpc GENERATE_EXTENSIONS .grpc.pb.h .grpc.pb.cc PLUGIN "protoc-gen-grpc=${grpc_cpp_plugin_location}" PLUGIN_OPTIONS)

@@ -12,15 +12,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
 set(ABSL_PROPAGATE_CXX_STD ON)
 set(gRPC_INSTALL ON)
-set(gRPC_PROTOBUF_PROVIDER package)
-set(gRPC_PROTOBUF_PACKAGE_TYPE MODULE)
-set(HAS_SYSTEM_PROTOBUF true)
-
-find_package(Protobuf REQUIRED)
 
 if(USE_SYSTEM_GRPC)
     # Find system-installed gRPC
     find_package(gRPC CONFIG REQUIRED)
+    find_package(Protobuf REQUIRED)
 else()
     # Build gRPC using FetchContent
     include(FetchContent)
@@ -28,12 +24,11 @@ else()
     FetchContent_Declare(
         gRPC
         GIT_REPOSITORY https://github.com/grpc/grpc
-        GIT_TAG        v1.54.3
+        GIT_TAG        v1.59.0
         OVERRIDE_FIND_PACKAGE
         EXCLUDE_FROM_ALL
     )
     FetchContent_MakeAvailable(gRPC)
-
     find_package(Protobuf REQUIRED)
 
     set(protobuf_MODULE_COMPATIBLE ON CACHE BOOL "")
@@ -88,7 +83,7 @@ add_custom_target(
         ${ReplicatedSplinterDB_SOURCE_DIR}/src
         ${ReplicatedSplinterDB_SOURCE_DIR}/apps
         ${ReplicatedSplinterDB_SOURCE_DIR}/include
-        -type f "\\(" -iname \*.cpp -o -iname \*.hpp -o -iname \*.h "\\)"
+        -type f "\\(" -iname \"*.cpp\" -o -iname \"*.hpp\" -o -iname \"*.h\" "\\)"
         | xargs clang-format -i
 )
 

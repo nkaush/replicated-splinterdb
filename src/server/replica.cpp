@@ -146,13 +146,15 @@ void replica::clear_cache() {
     splinterdb_clear_cache(sm_->get_splinterdb_handle());
 }
 
-std::pair<std::unique_ptr<std::string>, int32_t> replica::read(slice&& key) {
+std::pair<std::unique_ptr<std::string>, int32_t> replica::read(
+    const std::string& key) {
     splinterdb_lookup_result result;
     splinterdb_lookup_result_init(sm_->get_splinterdb_handle(), &result, 0,
-                                  NULL);
+                                  nullptr);
 
-    int retcode = splinterdb_lookup(sm_->get_splinterdb_handle(),
-                                    std::forward<slice>(key), &result);
+    int retcode =
+        splinterdb_lookup(sm_->get_splinterdb_handle(),
+                          slice_create(key.size(), key.data()), &result);
     if (retcode != 0) {
         return {nullptr, retcode};
     }

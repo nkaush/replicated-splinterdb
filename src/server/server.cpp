@@ -129,8 +129,7 @@ void server::initialize() {
 
     // string -> rpc_read_result
     client_srv_.bind(RPC_SPLINTERDB_GET, [this](string key) {
-        slice key_slice = slice_create(key.size(), key.data());
-        auto [slice, rc] = replica_instance_.read(std::move(key_slice));
+        auto [slice, rc] = replica_instance_.read(key);
 
         if (rc == 0) {
             return rpc_read_result{*slice, 0};

@@ -33,7 +33,8 @@ class replica {
 
     void clear_cache();
 
-    std::pair<std::unique_ptr<std::string>, int32_t> read(slice&& key);
+    std::pair<std::unique_ptr<std::string>, int32_t> read(
+        const std::string& key);
 
     std::pair<nuraft::cmd_result_code, std::string> add_server(
         int32_t server_id, const std::string& raft_endpoint,
