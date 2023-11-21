@@ -13,8 +13,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(ABSL_PROPAGATE_CXX_STD ON)
 set(gRPC_INSTALL ON)
 set(gRPC_BUILD_TESTS OFF)
-set(gRPC_PROTOBUF_PROVIDER module)
-set(gRPC_PROTOBUF_PACKAGE_TYPE PACKAGE)
+set(gRPC_PROTOBUF_PROVIDER package)
 set(ABSL_PROPAGATE_CXX_STD ON)
 
 if(USE_SYSTEM_GRPC)
@@ -26,6 +25,15 @@ else()
     include(FetchContent)
     set(FETCHCONTENT_QUIET OFF)
     FetchContent_Declare(
+        Protobuf
+        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+        GIT_TAG        v25.1
+        SOURCE_SUBDIR  cmake
+        FIND_PACKAGE_ARGS NAMES protobuf
+    )
+    FetchContent_MakeAvailable(Protobuf)
+
+    FetchContent_Declare(
         gRPC
         GIT_REPOSITORY https://github.com/grpc/grpc
         GIT_TAG        v1.59.0
@@ -33,9 +41,10 @@ else()
         EXCLUDE_FROM_ALL
     )
     FetchContent_MakeAvailable(gRPC)
-    include(FindProtobuf)
+    
     find_package(Protobuf REQUIRED)
-    message(STATUS "===== HERE ${PROTOBUF_INCLUDE_DIR}")
+    message(STATUS "protobuf Source Directory ${protobuf_SOURCE_DIR}")
+    include(${protobuf_SOURCE_DIR}/cmake/protobuf-generate.cmake)
 endif()
 
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/protos")
