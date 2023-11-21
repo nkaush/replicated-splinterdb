@@ -182,10 +182,12 @@ std::pair<cmd_result_code, std::string> replica::add_server(
     ptr<raft_result> ret = raft_instance_->add_srv(srv_conf_to_add);
     if (!ret->get_accepted()) {
         std::cout << "failed to add server: " << ret->get_result_str()
-                  << " (rc=" << ret->get_result_code() << ")";
+                  << " (rc=" << ret->get_result_code() << ")" << std::endl;
     } else {
+        auto rv = ret->get();
         std::cout << "add_server succeeded [id=" << srv_conf_to_add.get_id()
-                  << ", endpoint=" << srv_conf_to_add.get_endpoint() << "]";
+                  << ", endpoint=" << srv_conf_to_add.get_endpoint() << "]" 
+                  << std::endl;
     }
 
     return std::make_pair(ret->get_result_code(), ret->get_result_str());
