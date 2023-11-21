@@ -23,11 +23,13 @@ void CallDataT<RequestType, ReplyType>::Proceed(replica& replica_instance) {
         AddNextToCompletionQueue(replica_instance);
         HandleRequest(replica_instance);
         status_ = CallStatus::FINISH;
+    } else if (status_ == CallStatus::FINISH) {
+        status_ = CallStatus::CLEANUP;
         responder_.Finish(reply_, Status::OK, this);
     } else {
         // We're done! Self-destruct!
-        if (status_ != CallStatus::FINISH) {
-            // Log some error message
+        if (status_ != CallStatus::CLEANUP) {
+            throw std::runtime_error("Invalid CallData state");
         }
         delete this;
     }
@@ -43,6 +45,8 @@ void CallDataGet::HandleRequest(replica& replica_instance) {
 
     reply_.mutable_kvstore_result()->set_result(INT_AS_BYTES(res.second),
                                                 sizeof(res.second));
+
+    AddToCompletionQueue();
 }
 
 void CallDataPut::HandleRequest(replica& replica_instance) {
@@ -53,6 +57,7 @@ void CallDataPut::HandleRequest(replica& replica_instance) {
     if (!res->get_accepted() || res->get_result_code() != 0) {
         reply_.mutable_repl_result()->set_rc(res->get_result_code());
         reply_.mutable_repl_result()->set_msg(res->get_result_str());
+        AddToCompletionQueue();
     } else {
         res->when_ready(
             [this](replica::raft_result& res, ptr<std::exception>& exn) {
@@ -62,6 +67,7 @@ void CallDataPut::HandleRequest(replica& replica_instance) {
                 int32_t rc = res.get()->get_int();
                 reply_.mutable_kvstore_result()->set_result(INT_AS_BYTES(rc),
                                                             sizeof(rc));
+                AddToCompletionQueue();
             });
     }
 }
@@ -74,6 +80,7 @@ void CallDataUpdate::HandleRequest(replica& replica_instance) {
     if (!res->get_accepted() || res->get_result_code() != 0) {
         reply_.mutable_repl_result()->set_rc(res->get_result_code());
         reply_.mutable_repl_result()->set_msg(res->get_result_str());
+        AddToCompletionQueue();
     } else {
         res->when_ready(
             [this](replica::raft_result& res, ptr<std::exception>& exn) {
@@ -83,6 +90,7 @@ void CallDataUpdate::HandleRequest(replica& replica_instance) {
                 int32_t rc = res.get()->get_int();
                 reply_.mutable_kvstore_result()->set_result(INT_AS_BYTES(rc),
                                                             sizeof(rc));
+                AddToCompletionQueue();
             });
     }
 }
@@ -94,6 +102,7 @@ void CallDataDelete::HandleRequest(replica& replica_instance) {
     if (!res->get_accepted() || res->get_result_code() != 0) {
         reply_.mutable_repl_result()->set_rc(res->get_result_code());
         reply_.mutable_repl_result()->set_msg(res->get_result_str());
+        AddToCompletionQueue();
     } else {
         res->when_ready(
             [this](replica::raft_result& res, ptr<std::exception>& exn) {
@@ -103,12 +112,14 @@ void CallDataDelete::HandleRequest(replica& replica_instance) {
                 int32_t rc = res.get()->get_int();
                 reply_.mutable_kvstore_result()->set_result(INT_AS_BYTES(rc),
                                                             sizeof(rc));
+                AddToCompletionQueue();
             });
     }
 }
 
 void CallDataGetLeaderID::HandleRequest(replica& replica_instance) {
     reply_.set_id(replica_instance.get_leader());
+    AddToCompletionQueue();
 }
 
 void CallDataGetClusterEndpoints::HandleRequest(replica& replica_instance) {
@@ -125,6 +136,8 @@ void CallDataGetClusterEndpoints::HandleRequest(replica& replica_instance) {
 
         reply_.mutable_endpoints()->AddAllocated(cfe);
     }
+
+    AddToCompletionQueue();
 }
 
 }  // namespace replicated_splinterdb

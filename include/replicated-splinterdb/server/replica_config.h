@@ -13,7 +13,8 @@ namespace replicated_splinterdb {
 
 struct replica_config {
     replica_config(const data_config& splinterdb_data_cfg,
-                   const splinterdb_config& splinterdb_cfg)
+                   const splinterdb_config& splinterdb_cfg,
+                   bool use_async_handler = false)
         : server_id_(0),
           raft_port_(25000),
           client_port_(25001),
@@ -32,6 +33,10 @@ struct replica_config {
         splinterdb_cfg_.data_cfg = &splinterdb_data_cfg_;
         asio_thread_pool_size_ =
             std::max(std::thread::hardware_concurrency() / 2, 4U);
+        
+        if (use_async_handler) {
+          return_method_ = nuraft::raft_params::async_handler;
+        }
     }
 
     nuraft::raft_params::return_method_type get_return_method() const {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <grpc/support/log.h>
+#include <grpcpp/alarm.h>
 #include <grpcpp/grpcpp.h>
 
 #include "kvstore.grpc.pb.h"
@@ -38,19 +39,24 @@ class CallDataT : CallDataBase {
     virtual void Proceed(replica& replica_instance) override;
 
   protected:
-    enum class CallStatus { CREATE, PROCESS, FINISH };
+    enum class CallStatus { CREATE, PROCESS, FINISH, CLEANUP };
     CallStatus status_;
 
     kvstore::ReplicatedKVStore::AsyncService* service_;
     grpc::ServerCompletionQueue* cq_;
     grpc::ServerAsyncResponseWriter<ReplyType> responder_;
     grpc::ServerContext context_;
+    grpc::Alarm alarm_;
     RequestType request_;
     ReplyType reply_;
 
     // When we handle a request of this type, we need to tell
     // the completion queue to wait for new requests of the same type.
     virtual void AddNextToCompletionQueue(replica& replica_instance) = 0;
+
+    void AddToCompletionQueue() {
+      alarm_.Set(cq_, gpr_timespec{0, 0, GPR_TIMESPAN}, nullptr);
+    }
 };
 
 #define DEFINE_RPC_CALLDATA(rpc_name, request_type, response_type)          \

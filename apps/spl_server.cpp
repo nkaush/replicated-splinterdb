@@ -45,6 +45,7 @@ DEFINE_string(seed, "",
               "this server to the cluster. If empty, this server will start a "
               "new cluster.");
 DEFINE_int64(nthreads, 40, "The number of threads to use for RPC handling");
+DEFINE_bool(async, false, "Use the async_handler raft implementation.");
 
 DEFINE_validator(raftport, &validate_port);
 DEFINE_validator(clientport, &validate_port);
@@ -126,7 +127,7 @@ int main(int argc, char** argv) {
     splinterdb_cfg.use_stats = 1U;
     splinterdb_cfg.cache_use_stats = true;
 
-    replica_config cfg{splinter_data_cfg, splinterdb_cfg};
+    replica_config cfg{splinter_data_cfg, splinterdb_cfg, FLAGS_async};
     cfg.server_id_ = FLAGS_serverid;
 
     std::array<char, 100> hostnamebuf;
