@@ -1,5 +1,5 @@
 find_package(gRPC CONFIG REQUIRED)
-find_package(Protobuf REQUIRED)
+# find_package(Protobuf REQUIRED)
 find_package(Threads)
 
 # Protobuf/Grpc source files
