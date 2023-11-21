@@ -89,6 +89,8 @@ class CallDataT : CallDataBase {
         } else if (status_ == PROCESS) {
             AddNextToCompletionQueue();
             HandleRequest();
+            status_ = FINISH;
+            responder_.Finish(reply_, Status::OK, this);
         } else {
             // We're done! Self-destruct!
             if (status_ != FINISH) {
@@ -118,13 +120,7 @@ class CallDataHello : CallDataT<HelloRequest, HelloReply> {
     }
 
     virtual void HandleRequest() override {
-        std::thread t([this]() {
-            std::this_thread::sleep_for(5000ms);
-            reply_.set_message(std::string("Hello ") + request_.name());
-            status_ = FINISH;
-            responder_.Finish(reply_, Status::OK, this);
-        });
-        t.detach();
+        reply_.set_message(std::string("Hello ") + request_.name());
     }
 };
 
@@ -149,8 +145,6 @@ class CallDataHelloAgain : CallDataT<HelloRequest, HelloReply> {
 
     virtual void HandleRequest() override {
         reply_.set_message(std::string("Hello again ") + request_.name());
-        status_ = FINISH;
-        responder_.Finish(reply_, Status::OK, this);
     }
 };
 
