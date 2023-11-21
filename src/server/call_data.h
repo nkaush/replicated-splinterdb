@@ -55,7 +55,7 @@ class CallDataT : CallDataBase {
     virtual void AddNextToCompletionQueue(replica& replica_instance) = 0;
 
     void AddToCompletionQueue() {
-      alarm_.Set(cq_, gpr_timespec{0, 0, GPR_TIMESPAN}, nullptr);
+      alarm_.Set(cq_, gpr_timespec{0, 0, GPR_TIMESPAN}, this);
     }
 };
 
