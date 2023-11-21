@@ -7,7 +7,7 @@
 #include "replicated-splinterdb/common/rpc.h"
 #include "replicated-splinterdb/common/types.h"
 
-#define TPCQ (4)
+#define TPCQ (2)
 
 namespace replicated_splinterdb {
 
