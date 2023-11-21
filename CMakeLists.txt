@@ -14,6 +14,7 @@ set(ABSL_PROPAGATE_CXX_STD ON)
 set(gRPC_INSTALL ON)
 set(gRPC_BUILD_TESTS OFF)
 set(gRPC_PROTOBUF_PROVIDER module)
+set(gRPC_PROTOBUF_PACKAGE_TYPE PACKAGE)
 set(ABSL_PROPAGATE_CXX_STD ON)
 
 if(USE_SYSTEM_GRPC)
@@ -32,7 +33,9 @@ else()
         EXCLUDE_FROM_ALL
     )
     FetchContent_MakeAvailable(gRPC)
-    # find_package(Protobuf REQUIRED)
+    include(FindProtobuf)
+    find_package(Protobuf REQUIRED)
+    message(STATUS "===== HERE ${PROTOBUF_INCLUDE_DIR}")
 endif()
 
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/protos")
