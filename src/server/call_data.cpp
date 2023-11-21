@@ -54,22 +54,19 @@ void CallDataPut::HandleRequest(replica& replica_instance) {
         splinterdb_operation::serialize_put(request_.key(), request_.value());
     ptr<replica::raft_result> res = replica_instance.append_log(log);
 
-    if (!res->get_accepted() || res->get_result_code() != 0) {
-        reply_.mutable_repl_result()->set_rc(res->get_result_code());
-        reply_.mutable_repl_result()->set_msg(res->get_result_str());
-        AddToCompletionQueue();
-    } else {
-        res->when_ready(
-            [this](replica::raft_result& res, ptr<std::exception>& exn) {
-                reply_.mutable_repl_result()->set_rc(res.get_result_code());
-                reply_.mutable_repl_result()->set_msg(res.get_result_str());
+    res->when_ready(
+        [this](replica::raft_result& result, ptr<std::exception>& exn) {
+            reply_.mutable_repl_result()->set_rc(result.get_result_code());
+            reply_.mutable_repl_result()->set_msg(result.get_result_str());
 
-                int32_t rc = res.get()->get_int();
+            if (result.get_accepted()) {
+                int32_t rc = result.get()->get_int();
                 reply_.mutable_kvstore_result()->set_result(INT_AS_BYTES(rc),
                                                             sizeof(rc));
-                AddToCompletionQueue();
-            });
-    }
+            }
+            
+            AddToCompletionQueue();
+        });
 }
 
 void CallDataUpdate::HandleRequest(replica& replica_instance) {
@@ -77,44 +74,38 @@ void CallDataUpdate::HandleRequest(replica& replica_instance) {
                                                              request_.value());
     ptr<replica::raft_result> res = replica_instance.append_log(log);
 
-    if (!res->get_accepted() || res->get_result_code() != 0) {
-        reply_.mutable_repl_result()->set_rc(res->get_result_code());
-        reply_.mutable_repl_result()->set_msg(res->get_result_str());
-        AddToCompletionQueue();
-    } else {
-        res->when_ready(
-            [this](replica::raft_result& res, ptr<std::exception>& exn) {
-                reply_.mutable_repl_result()->set_rc(res.get_result_code());
-                reply_.mutable_repl_result()->set_msg(res.get_result_str());
+    res->when_ready(
+        [this](replica::raft_result& result, ptr<std::exception>& exn) {
+            reply_.mutable_repl_result()->set_rc(result.get_result_code());
+            reply_.mutable_repl_result()->set_msg(result.get_result_str());
 
-                int32_t rc = res.get()->get_int();
+            if (result.get_accepted()) {
+                int32_t rc = result.get()->get_int();
                 reply_.mutable_kvstore_result()->set_result(INT_AS_BYTES(rc),
                                                             sizeof(rc));
-                AddToCompletionQueue();
-            });
-    }
+            }
+            
+            AddToCompletionQueue();
+        });
 }
 
 void CallDataDelete::HandleRequest(replica& replica_instance) {
     ptr<buffer> log = splinterdb_operation::serialize_delete(request_.key());
     ptr<replica::raft_result> res = replica_instance.append_log(log);
 
-    if (!res->get_accepted() || res->get_result_code() != 0) {
-        reply_.mutable_repl_result()->set_rc(res->get_result_code());
-        reply_.mutable_repl_result()->set_msg(res->get_result_str());
-        AddToCompletionQueue();
-    } else {
-        res->when_ready(
-            [this](replica::raft_result& res, ptr<std::exception>& exn) {
-                reply_.mutable_repl_result()->set_rc(res.get_result_code());
-                reply_.mutable_repl_result()->set_msg(res.get_result_str());
+    res->when_ready(
+        [this](replica::raft_result& result, ptr<std::exception>& exn) {
+            reply_.mutable_repl_result()->set_rc(result.get_result_code());
+            reply_.mutable_repl_result()->set_msg(result.get_result_str());
 
-                int32_t rc = res.get()->get_int();
+            if (result.get_accepted()) {
+                int32_t rc = result.get()->get_int();
                 reply_.mutable_kvstore_result()->set_result(INT_AS_BYTES(rc),
                                                             sizeof(rc));
-                AddToCompletionQueue();
-            });
-    }
+            }
+            
+            AddToCompletionQueue();
+        });
 }
 
 void CallDataGetLeaderID::HandleRequest(replica& replica_instance) {
