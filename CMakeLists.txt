@@ -32,11 +32,7 @@ else()
         EXCLUDE_FROM_ALL
     )
     FetchContent_MakeAvailable(gRPC)
-    # find_package(Protobuf REQUIRED)
-
-    set(protobuf_MODULE_COMPATIBLE ON CACHE BOOL "")
-    FetchContent_GetProperties(gRPC SOURCE_DIR Protobuf_SOURCE_DIR)
-    include(${Protobuf_SOURCE_DIR}/cmake/protobuf.cmake)
+    find_package(Protobuf REQUIRED)
 endif()
 
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/protos")
