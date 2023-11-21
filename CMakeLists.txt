@@ -25,13 +25,13 @@ else()
     include(FetchContent)
     set(FETCHCONTENT_QUIET OFF)
     FetchContent_Declare(
-        Protobuf
+        protobuf
         GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
         GIT_TAG        v25.1
         SOURCE_SUBDIR  cmake
         FIND_PACKAGE_ARGS NAMES protobuf
     )
-    FetchContent_MakeAvailable(Protobuf)
+    FetchContent_MakeAvailable(protobuf)
 
     FetchContent_Declare(
         gRPC
@@ -42,7 +42,7 @@ else()
     )
     FetchContent_MakeAvailable(gRPC)
     
-    find_package(Protobuf REQUIRED)
+    find_package(protobuf REQUIRED)
     find_package(gRPC REQUIRED)
     message(STATUS "protobuf Source Directory ${protobuf_SOURCE_DIR}")
     include(${protobuf_SOURCE_DIR}/cmake/protobuf-generate.cmake)
