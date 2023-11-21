@@ -32,6 +32,9 @@ else()
         FIND_PACKAGE_ARGS NAMES protobuf
     )
     FetchContent_MakeAvailable(protobuf)
+    FetchContent_GetProperties(protobuf SOURCE_DIR Protobuf_SOURCE_DIR)
+    FetchContent_GetProperties(protobuf INCLUDE_DIRS Protobuf_INCLUDE_DIRS)
+    include(${protobuf_SOURCE_DIR}/cmake/protobuf-generate.cmake)
 
     FetchContent_Declare(
         gRPC
@@ -45,7 +48,6 @@ else()
     find_package(protobuf REQUIRED)
     find_package(gRPC REQUIRED)
     message(STATUS "protobuf Source Directory ${protobuf_SOURCE_DIR}")
-    include(${protobuf_SOURCE_DIR}/cmake/protobuf-generate.cmake)
 endif()
 
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/protos")
