@@ -7,6 +7,8 @@
 #include "replicated-splinterdb/common/rpc.h"
 #include "replicated-splinterdb/common/types.h"
 
+#define TPCQ (4)
+
 namespace replicated_splinterdb {
 
 using nuraft::buffer;
@@ -43,7 +45,7 @@ void server::run(uint64_t nthreads) {
     builder.RegisterService(&service_);
     // Get hold of the completion queue used for the asynchronous communication
     // with the gRPC runtime.
-    for (uint64_t i = 0; i < (nthreads / 2); ++i) {
+    for (uint64_t i = 0; i < (nthreads / TPCQ); ++i) {
         cqs_.push_back(builder.AddCompletionQueue());
     }
 
@@ -55,7 +57,7 @@ void server::run(uint64_t nthreads) {
     for (uint64_t i = 0; i < nthreads; ++i) {
         std::thread t([i, this]() {
             replica_instance_.register_thread();
-            HandleRpcs(cqs_[i / 2].get());
+            HandleRpcs(cqs_[i / TPCQ].get());
         });
         threads.push_back(std::move(t));
     }

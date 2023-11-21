@@ -83,7 +83,7 @@ add_custom_target(
 )
 
 add_custom_target(
-    format COMMAND find 
+    rsdb-format COMMAND find 
         ${ReplicatedSplinterDB_SOURCE_DIR}/src
         ${ReplicatedSplinterDB_SOURCE_DIR}/apps
         ${ReplicatedSplinterDB_SOURCE_DIR}/include
@@ -92,7 +92,7 @@ add_custom_target(
 )
 
 add_custom_target(
-    tidy COMMAND find 
+    rsdb-tidy COMMAND find 
         ${ReplicatedSplinterDB_SOURCE_DIR}/src
         ${ReplicatedSplinterDB_SOURCE_DIR}/apps
         ${ReplicatedSplinterDB_SOURCE_DIR}/include
