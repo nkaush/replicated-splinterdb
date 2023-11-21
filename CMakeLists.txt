@@ -29,7 +29,7 @@ else()
         EXCLUDE_FROM_ALL
     )
     FetchContent_MakeAvailable(gRPC)
-    find_package(Protobuf REQUIRED)
+    # find_package(Protobuf REQUIRED)
 
     set(protobuf_MODULE_COMPATIBLE ON CACHE BOOL "")
     FetchContent_GetProperties(gRPC SOURCE_DIR Protobuf_SOURCE_DIR)
