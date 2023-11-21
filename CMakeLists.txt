@@ -43,6 +43,7 @@ else()
     FetchContent_MakeAvailable(gRPC)
     
     find_package(Protobuf REQUIRED)
+    find_package(gRPC REQUIRED)
     message(STATUS "protobuf Source Directory ${protobuf_SOURCE_DIR}")
     include(${protobuf_SOURCE_DIR}/cmake/protobuf-generate.cmake)
 endif()
