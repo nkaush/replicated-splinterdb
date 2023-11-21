@@ -28,7 +28,7 @@ struct replica_config {
           splinterdb_log_file_(std::nullopt),
           splinterdb_data_cfg_(splinterdb_data_cfg),
           splinterdb_cfg_(splinterdb_cfg),
-          return_method_(nuraft::raft_params::async_handler) {
+          return_method_(nuraft::raft_params::blocking) {
         splinterdb_cfg_.data_cfg = &splinterdb_data_cfg_;
         asio_thread_pool_size_ =
             std::max(std::thread::hardware_concurrency() / 2, 4U);
