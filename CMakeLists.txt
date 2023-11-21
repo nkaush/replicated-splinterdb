@@ -32,7 +32,7 @@ else()
         EXCLUDE_FROM_ALL
     )
     FetchContent_MakeAvailable(gRPC)
-    find_package(Protobuf REQUIRED)
+    # find_package(Protobuf REQUIRED)
 endif()
 
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/protos")
