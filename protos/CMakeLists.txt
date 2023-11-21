@@ -1,5 +1,4 @@
 find_package(gRPC CONFIG REQUIRED)
-find_package(Protobuf REQUIRED)
 find_package(Threads)
 
 # Protobuf/Grpc source files
@@ -9,13 +8,13 @@ set(KVSTORE_PROTO_FILES kvstore.proto)
 # Add Library target with protobuf sources
 add_library(helloworld ${HELLOWORLD_PROTO_FILES})
 add_dependencies(helloworld grpc_cpp_plugin)
-target_link_libraries(helloworld PUBLIC libprotobuf grpc++)
+target_link_libraries(helloworld PUBLIC protobuf::libprotobuf grpc++)
 target_include_directories(helloworld PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 # Add Library target with protobuf sources
 add_library(kvstoreapi ${KVSTORE_PROTO_FILES})
 add_dependencies(kvstoreapi grpc_cpp_plugin)
-target_link_libraries(kvstoreapi PUBLIC libprotobuf grpc++)
+target_link_libraries(kvstoreapi PUBLIC protobuf::libprotobuf grpc++)
 target_include_directories(kvstoreapi PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 # Compile protobuf and grpc files in helloworld target to cpp

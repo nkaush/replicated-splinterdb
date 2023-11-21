@@ -12,9 +12,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
 set(ABSL_PROPAGATE_CXX_STD ON)
 set(gRPC_INSTALL ON)
+set(gRPC_BUILD_GRPC_CPP_PLUGIN ON)
 set(gRPC_BUILD_TESTS OFF)
-set(gRPC_PROTOBUF_PROVIDER package)
+set(gRPC_PROTOBUF_PROVIDER module)
 set(ABSL_ENABLE_INSTALL ON)
+set(BUILD_TESTING OFF)
 
 if(USE_SYSTEM_GRPC)
     # Find system-installed gRPC
@@ -25,18 +27,6 @@ else()
     include(FetchContent)
     set(FETCHCONTENT_QUIET OFF)
     FetchContent_Declare(
-        protobuf
-        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
-        GIT_TAG        v25.1
-        SOURCE_SUBDIR  cmake
-        FIND_PACKAGE_ARGS NAMES protobuf
-    )
-    FetchContent_MakeAvailable(protobuf)
-    FetchContent_GetProperties(protobuf SOURCE_DIR Protobuf_SOURCE_DIR)
-    FetchContent_GetProperties(protobuf INCLUDE_DIRS Protobuf_INCLUDE_DIRS)
-    include(${protobuf_SOURCE_DIR}/cmake/protobuf-generate.cmake)
-
-    FetchContent_Declare(
         gRPC
         GIT_REPOSITORY https://github.com/grpc/grpc
         GIT_TAG        v1.59.0
@@ -45,9 +35,9 @@ else()
     )
     FetchContent_MakeAvailable(gRPC)
     
-    find_package(protobuf REQUIRED)
-    find_package(gRPC REQUIRED)
-    message(STATUS "protobuf Source Directory ${protobuf_SOURCE_DIR}")
+    find_package(gRPC CONFIG REQUIRED)
+    FetchContent_GetProperties(gRPC SOURCE_DIR gRPC_SOURCE_DIR)
+    include(${gRPC_SOURCE_DIR}/third_party/protobuf/cmake/protobuf-generate.cmake)
 endif()
 
 add_subdirectory("${ReplicatedSplinterDB_SOURCE_DIR}/protos")
