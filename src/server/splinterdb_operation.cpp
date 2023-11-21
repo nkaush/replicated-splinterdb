@@ -8,6 +8,49 @@ using nuraft::buffer;
 using nuraft::buffer_serializer;
 using nuraft::ptr;
 
+ptr<buffer> splinterdb_operation::serialize_put(const std::string& key,
+                                                const std::string& value) {
+    size_t buffer_size = sizeof(type_) + sizeof(uint32_t) + key.size() +
+                         sizeof(uint32_t) + value.size();
+
+    ptr<buffer> buf = buffer::alloc(buffer_size);
+    buffer_serializer bs(buf);
+
+    bs.put_u8(splinterdb_operation_type::PUT);
+    bs.put_str(key);
+    bs.put_str(value);
+
+    return buf;
+}
+
+nuraft::ptr<nuraft::buffer> splinterdb_operation::serialize_update(
+    const std::string& key, const std::string& value) {
+    size_t buffer_size = sizeof(type_) + sizeof(uint32_t) + key.size() +
+                         sizeof(uint32_t) + value.size();
+
+    ptr<buffer> buf = buffer::alloc(buffer_size);
+    buffer_serializer bs(buf);
+
+    bs.put_u8(splinterdb_operation_type::UPDATE);
+    bs.put_str(key);
+    bs.put_str(value);
+
+    return buf;
+}
+
+nuraft::ptr<nuraft::buffer> splinterdb_operation::serialize_delete(
+    const std::string& key) {
+    size_t buffer_size = sizeof(type_) + sizeof(uint32_t) + key.size();
+
+    ptr<buffer> buf = buffer::alloc(buffer_size);
+    buffer_serializer bs(buf);
+
+    bs.put_u8(splinterdb_operation_type::DELETE);
+    bs.put_str(key);
+
+    return buf;
+}
+
 ptr<buffer> splinterdb_operation::serialize() const {
     size_t buffer_size = sizeof(type_) + sizeof(uint32_t) + key_.size();
     if (value_.has_value()) {

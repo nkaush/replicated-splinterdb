@@ -19,7 +19,7 @@ static bool handle_mutation_result(rpc_mutation_result&& result);
 
 static std::vector<std::string> tokenize(const char* str, char delim = ' ');
 
-static bool handle_command(rpc::client& client,
+static bool handle_command(replicated_splinterdb::client& client,
                            const std::vector<std::string>& tokens);
 
 bool handle_mutation_result(rpc_mutation_result&& result) {

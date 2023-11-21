@@ -42,6 +42,8 @@ class replica {
 
     nuraft::ptr<raft_result> append_log(const splinterdb_operation& operation);
 
+    nuraft::ptr<raft_result> append_log(nuraft::ptr<nuraft::buffer> log);
+
     void append_log(const splinterdb_operation& operation,
                     handle_commit_result handle_result);
 

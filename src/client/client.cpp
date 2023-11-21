@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <thread>
 
 #include "replicated-splinterdb/common/rpc.h"
@@ -15,6 +16,20 @@
 
 namespace replicated_splinterdb {
 
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
+using kvstore::ClientFacingEndpoint;
+using kvstore::ClusterEndpoints;
+using kvstore::Empty;
+using kvstore::Key;
+using kvstore::KVPair;
+using kvstore::ReadResponse;
+using kvstore::MutationResponse;
+using kvstore::ReplicatedKVStore;
+using kvstore::ReplicationResult;
+using kvstore::ReplicatedKVStore;
+using kvstore::ServerID;
 using std::string;
 
 client::client(const string& host, uint16_t port,
@@ -24,49 +39,47 @@ client::client(const string& host, uint16_t port,
       read_policy_(nullptr),
       num_retries_(num_retries),
       print_errors_(print_errors) {
-    rpc::client cl{host, port};
+    std::string target_str = host + ":" + std::to_string(port);
+    std::shared_ptr<Channel> channel = 
+        grpc::CreateChannel(target_str, grpc::InsecureChannelCredentials());
+    std::unique_ptr<ReplicatedKVStore::Stub> stub = 
+        ReplicatedKVStore::NewStub(channel);
 
     std::vector<std::tuple<int32_t, string>> srvs;
-    try {
-        if (cl.call(RPC_PING).as<string>() != "pong") {
-            throw std::runtime_error("server returned unexpected response");
+    Empty empty;
+    {
+        ClusterEndpoints endpoints;
+        ClientContext context;
+        Status status = stub->GetClusterEndpoints(&context, empty, &endpoints);
+
+        if (!status.ok()) {
+            std::cerr << "ERROR: GetClusterEndpoints RPC failed: " 
+                      << status.error_message() << std::endl;
         }
 
-        srvs = cl.call(RPC_GET_ALL_SERVERS)
-                   .as<std::vector<std::tuple<int32_t, string>>>();
-
-        leader_id_ = cl.call(RPC_GET_LEADER_ID).as<int32_t>();
-    } catch (const std::exception& e) {
-        std::cerr << "ERROR: " << e.what() << std::endl;
-        exit(1);
+        for (auto& e : endpoints.endpoints()) {
+            srvs.emplace_back(e.server_id().id(), e.client_endpoint().connection_string());
+        }
     }
 
-    for (const auto& [srv_id, endpoint] : srvs) {
-        auto delim_idx = endpoint.find(':');
-        string srv_host = endpoint.substr(0, delim_idx);
-        int srv_port = std::stoi(endpoint.substr(delim_idx + 1));
+    {   
+        ServerID sid;
+        ClientContext context;
+        Status status = stub->GetLeaderID(&context, empty, &sid);
 
-        if (1 > srv_port || srv_port > 65535) {
-            string msg = "invalid port number for host \"" + srv_host +
-                         "\": " + std::to_string(srv_port);
-            throw std::runtime_error(msg);
+        if (!status.ok()) {
+            std::cerr << "ERROR: GetLeaderID RPC failed: " 
+                      << status.error_message() << std::endl;
         }
 
-        auto checked_port = static_cast<uint16_t>(srv_port);
-        try {
-            clients_.emplace(std::piecewise_construct,
-                             std::forward_as_tuple(srv_id),
-                             std::forward_as_tuple(srv_host, checked_port));
-        } catch (const std::exception& e) {
-            std::cerr << "WARNING: failed to connect to " << endpoint
-                      << " ... skipping. Reason:\n\t" << e.what() << std::endl;
-            continue;
-        }
+        leader_id_ = sid.id();
     }
 
     std::vector<int32_t> srv_ids;
-    for (auto& [srv_id, c] : clients_) {
-        c.set_timeout(static_cast<int64_t>(timeout_ms));
+    for (const auto& [srv_id, endpoint] : srvs) {
+        std::shared_ptr<Channel> c = 
+            grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials());
+        clients_.emplace(srv_id, ReplicatedKVStore::NewStub(c));
         srv_ids.push_back(srv_id);
     }
 
@@ -92,28 +105,28 @@ client::client(const string& host, uint16_t port,
 }
 
 void client::trigger_cache_dumps(const string& directory) {
-    for (auto& [id, c] : clients_) {
-        bool result = c.call(RPC_SPLINTERDB_DUMPCACHE, directory).as<bool>();
+    // for (auto& [id, c] : clients_) {
+    //     bool result = c.call(RPC_SPLINTERDB_DUMPCACHE, directory).as<bool>();
 
-        if (!result) {
-            std::cerr << "WARNING: failed to dump cache on server " << id
-                      << std::endl;
-        }
-    }
+    //     if (!result) {
+    //         std::cerr << "WARNING: failed to dump cache on server " << id
+    //                   << std::endl;
+    //     }
+    // }
 }
 
 void client::trigger_cache_clear() {
-    for (auto& [id, c] : clients_) {
-        bool result = c.call(RPC_SPLINTERDB_CLEARCACHE).as<bool>();
+    // for (auto& [id, c] : clients_) {
+    //     bool result = c.call(RPC_SPLINTERDB_CLEARCACHE).as<bool>();
 
-        if (!result) {
-            std::cerr << "WARNING: failed to clear cache on server " << id
-                      << std::endl;
-        }
-    }
+    //     if (!result) {
+    //         std::cerr << "WARNING: failed to clear cache on server " << id
+    //                   << std::endl;
+    //     }
+    // }
 }
 
-rpc::client& client::get_leader_handle() { return clients_.at(leader_id_); }
+ReplicatedKVStore::Stub& client::get_leader_handle() { return *clients_.at(leader_id_); }
 
 bool client::try_handle_leader_change(int32_t raft_result_code) {
     if (raft_result_code == CMD_RESULT_NOT_LEADER ||
@@ -132,9 +145,20 @@ bool client::try_handle_leader_change(int32_t raft_result_code) {
 }
 
 rpc_read_result client::get(const string& key) {
-    return clients_.find(read_policy_->next_server(key))
-        ->second.call(RPC_SPLINTERDB_GET, key)
-        .as<rpc_read_result>();
+    Key req;
+    req.set_key(key);
+    ClientContext ctx;
+    ReadResponse resp;
+    Status s = clients_.find(read_policy_->next_server(key))->second->Get(&ctx, req, &resp);
+
+    replicated_splinterdb::splinterdb_return_code kvsr;
+    std::memcpy(&kvsr, resp.kvstore_result().result().data(), sizeof(kvsr));
+
+    if (resp.has_value()) {
+        return {resp.value(), kvsr};
+    } else {
+        return {std::string{}, kvsr};
+    }
 }
 
 rpc_mutation_result client::retry_mutation(
@@ -165,33 +189,83 @@ rpc_mutation_result client::retry_mutation(
 }
 
 rpc_mutation_result client::put(const string& key, const string& value) {
-    rpc::client& cl = get_leader_handle();
+    ReplicatedKVStore::Stub& cl = get_leader_handle();
     return retry_mutation(key, [&cl, key, value]() {
-        return cl.call(RPC_SPLINTERDB_PUT, key, value)
-            .as<rpc_mutation_result>();
+        KVPair kvp;
+        ClientContext ctx;
+        MutationResponse mr;
+        
+        kvp.set_key(key);
+        kvp.set_value(value);
+        Status status = cl.Put(&ctx, kvp, &mr);
+
+        replicated_splinterdb::splinterdb_return_code kvsr = -1;
+        if (mr.repl_result().rc() == 0) {
+            std::memcpy(&kvsr, mr.kvstore_result().result().data(), sizeof(kvsr));
+        }
+
+        return rpc_mutation_result{kvsr, mr.repl_result().rc(), mr.repl_result().msg()};
     });
 }
 
 rpc_mutation_result client::update(const string& key, const string& value) {
-    rpc::client& cl = get_leader_handle();
+    ReplicatedKVStore::Stub& cl = get_leader_handle();
     return retry_mutation(key, [&cl, key, value]() {
-        return cl.call(RPC_SPLINTERDB_UPDATE, key, value)
-            .as<rpc_mutation_result>();
+        KVPair kvp;
+        ClientContext ctx;
+        MutationResponse mr;
+        
+        kvp.set_key(key);
+        kvp.set_value(value);
+        Status status = cl.Update(&ctx, kvp, &mr);
+
+        replicated_splinterdb::splinterdb_return_code kvsr = -1;
+        if (mr.repl_result().rc() == 0) {
+            std::memcpy(&kvsr, mr.kvstore_result().result().data(), sizeof(kvsr));
+        }
+
+        return rpc_mutation_result{kvsr, mr.repl_result().rc(), mr.repl_result().msg()};
     });
 }
 
 rpc_mutation_result client::del(const std::string& key) {
-    rpc::client& cl = get_leader_handle();
+    ReplicatedKVStore::Stub& cl = get_leader_handle();
     return retry_mutation(key, [&cl, key]() {
-        return cl.call(RPC_SPLINTERDB_DELETE, key).as<rpc_mutation_result>();
+        Key key_msg;
+        ClientContext ctx;
+        MutationResponse mr;
+        
+        key_msg.set_key(key);
+        Status status = cl.Delete(&ctx, key_msg, &mr);
+
+        replicated_splinterdb::splinterdb_return_code kvsr = -1;
+        if (mr.repl_result().rc() == 0) {
+            std::memcpy(&kvsr, mr.kvstore_result().result().data(), sizeof(kvsr));
+        }
+
+        return rpc_mutation_result{kvsr, mr.repl_result().rc(), mr.repl_result().msg()};
     });
 }
 
 std::vector<std::tuple<int32_t, string>> client::get_all_servers() {
-    for (auto& [srv_id, c] : clients_) {
+    for (auto& [srv_id, stub] : clients_) {
         try {
-            return c.call(RPC_GET_ALL_SERVERS)
-                .as<std::vector<std::tuple<int32_t, string>>>();
+            std::vector<std::tuple<int32_t, string>> srvs;
+            Empty empty;
+            ClusterEndpoints endpoints;
+            ClientContext context;
+            Status status = stub->GetClusterEndpoints(&context, empty, &endpoints);
+
+            if (!status.ok()) {
+                std::cerr << "ERROR: GetClusterEndpoints RPC failed: " 
+                        << status.error_message() << std::endl;
+            }
+
+            for (auto& e : endpoints.endpoints()) {
+                srvs.emplace_back(e.server_id().id(), e.client_endpoint().connection_string());
+            }
+
+            return srvs;
         } catch (const std::exception& e) {
             std::cerr << "WARNING: failed to connect to " << srv_id
                       << " ... skipping. Reason:\n\t" << e.what() << std::endl;
@@ -204,15 +278,20 @@ std::vector<std::tuple<int32_t, string>> client::get_all_servers() {
 
 int32_t client::get_leader_id() {
     size_t delay_ms = 100;
-    for (auto& [srv_id, c] : clients_) {
+    for (auto& [srv_id, stub] : clients_) {
         try {
             for (uint16_t i = 0; i < num_retries_; ++i) {
-                int32_t leader_id = c.call(RPC_GET_LEADER_ID).as<int32_t>();
-                if (leader_id != GET_LEADER_NO_LIVE_LEADER) {
-                    return leader_id;
-                }
+                Empty empty;
+                ServerID sid;
+                ClientContext context;
+                Status status = stub->GetLeaderID(&context, empty, &sid);
 
-                if (print_errors_) {
+                if (!status.ok()) {
+                    std::cerr << "ERROR: GetLeaderID RPC failed: " 
+                              << status.error_message() << std::endl;
+                } else if (sid.id() != GET_LEADER_NO_LIVE_LEADER) {
+                    return sid.id();
+                } else if (print_errors_) {
                     std::cerr << "WARNING: no live leader, retrying..."
                               << std::endl;
                 }

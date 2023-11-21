@@ -181,10 +181,11 @@ std::pair<cmd_result_code, std::string> replica::add_server(
     const srv_config& srv_conf_to_add) {
     ptr<raft_result> ret = raft_instance_->add_srv(srv_conf_to_add);
     if (!ret->get_accepted()) {
-        S_ERR << "failed to add server: " << ret->get_result_code();
+        std::cout << "failed to add server: " << ret->get_result_str() 
+                  << " (rc=" << ret->get_result_code() << ")";
     } else {
-        S_INFO << "add_server succeeded [id=" << srv_conf_to_add.get_id()
-               << ", endpoint=" << srv_conf_to_add.get_endpoint() << "]";
+        std::cout << "add_server succeeded [id=" << srv_conf_to_add.get_id()
+                  << ", endpoint=" << srv_conf_to_add.get_endpoint() << "]";
     }
 
     return std::make_pair(ret->get_result_code(), ret->get_result_str());
@@ -192,16 +193,11 @@ std::pair<cmd_result_code, std::string> replica::add_server(
 
 ptr<replica::raft_result> replica::append_log(const splinterdb_operation& op) {
     ptr<buffer> new_log(op.serialize());
-    ptr<raft_result> ret = raft_instance_->append_entries({new_log});
+    return append_log(new_log);
+}
 
-    if (config_.get_return_method() == raft_params::blocking) {
-        // Blocking mode:
-        //   `append_entries` returns after getting a consensus,
-        //   so that `ret` already has the result from state machine.
-        return ret;
-    } else /* if (config_.return_method_ == raft_params::async_handler) */ {
-        throw std::runtime_error("async handler not implemented");
-    }
+ptr<replica::raft_result> replica::append_log(ptr<buffer> log) {
+    return raft_instance_->append_entries({log});
 }
 
 }  // namespace replicated_splinterdb

@@ -33,4 +33,4 @@ set_source_files_properties(
 target_include_directories(replicated-splinterdb-client PUBLIC "${ReplicatedSplinterDB_SOURCE_DIR}/include/")
 
 # Link the libraries to some other dependencies
-target_link_libraries(replicated-splinterdb-client rpc pthread)
+target_link_libraries(replicated-splinterdb-client kvstoreapi grpc++ pthread)

@@ -1,11 +1,12 @@
 #ifndef REPLICATED_SPLINTERDB_CLIENT_CLIENT_H
 #define REPLICATED_SPLINTERDB_CLIENT_CLIENT_H
 
+#include <grpcpp/grpcpp.h>
 #include <map>
 
+#include "kvstore.grpc.pb.h"
 #include "replicated-splinterdb/client/read_policy.h"
 #include "replicated-splinterdb/common/types.h"
-#include "rpc/client.h"
 
 namespace replicated_splinterdb {
 
@@ -39,13 +40,13 @@ class client {
     int32_t get_leader_id();
 
   private:
-    std::map<int32_t, rpc::client> clients_;
+    std::map<int32_t, std::unique_ptr<kvstore::ReplicatedKVStore::Stub>> clients_;
     std::unique_ptr<read_policy> read_policy_;
     int32_t leader_id_;
     const uint16_t num_retries_;
     bool print_errors_;
 
-    rpc::client& get_leader_handle();
+    kvstore::ReplicatedKVStore::Stub& get_leader_handle();
 
     bool try_handle_leader_change(int32_t raft_result_code);
 

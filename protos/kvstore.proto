@@ -20,7 +20,7 @@ message MutationResponse {
 
 // The result of a read to the kv-store
 message ReadResponse {
-    optional Value value = 1;
+    optional bytes value = 1;
     optional KVStoreResult kvstore_result = 2;
 }
 
@@ -34,13 +34,9 @@ message Key {
     bytes key = 1;
 }
 
-message Value {
-    bytes value = 1;
-}
-
 message KVPair {
-    Key key = 1;
-    Value value = 2;
+    bytes key = 1;
+    bytes value = 2;
 }
 
 // The NuRaft data describing the result of replication
@@ -54,7 +50,7 @@ message ServerID {
 }
 
 message Endpoint {
-    string server_id = 1;
+    string connection_string = 1;
 }
 
 message ClientFacingEndpoint {

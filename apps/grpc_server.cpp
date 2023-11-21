@@ -118,11 +118,11 @@ class CallDataHello : CallDataT<HelloRequest, HelloReply> {
     }
 
     virtual void HandleRequest() override {
-        std::thread t([this](){
-          std::this_thread::sleep_for(5000ms);
-          reply_.set_message(std::string("Hello ") + request_.name());
-          status_ = FINISH;
-          responder_.Finish(reply_, Status::OK, this);
+        std::thread t([this]() {
+            std::this_thread::sleep_for(5000ms);
+            reply_.set_message(std::string("Hello ") + request_.name());
+            status_ = FINISH;
+            responder_.Finish(reply_, Status::OK, this);
         });
         t.detach();
     }

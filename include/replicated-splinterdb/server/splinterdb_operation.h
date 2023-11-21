@@ -29,6 +29,14 @@ class splinterdb_operation {
 
     static splinterdb_operation make_delete(std::string&& key);
 
+    static nuraft::ptr<nuraft::buffer> serialize_put(const std::string& key,
+                                                     const std::string& value);
+
+    static nuraft::ptr<nuraft::buffer> serialize_update(
+        const std::string& key, const std::string& value);
+
+    static nuraft::ptr<nuraft::buffer> serialize_delete(const std::string& key);
+
   private:
     splinterdb_operation(std::string&& key, std::optional<std::string>&& value,
                          splinterdb_operation_type type);
