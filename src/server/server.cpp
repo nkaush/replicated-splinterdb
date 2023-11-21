@@ -49,11 +49,11 @@ void server::run(uint64_t nthreads) {
 
     // Finally assemble the server.
     server_ = builder.BuildAndStart();
-    std::cout << "Server listening on " << server_address << std::endl;
+    std::cout << "Listening for client RPCs on " << server_address << std::endl;
 
     std::vector<std::thread> threads;
     for (uint64_t i = 0; i < nthreads; ++i) {
-        std::thread t([i, this](){ 
+        std::thread t([i, this]() {
             replica_instance_.register_thread();
             HandleRpcs(cqs_[i / 2].get());
         });
@@ -65,12 +65,12 @@ void server::run(uint64_t nthreads) {
 
     join_srv_.async_run(1);
 
-    for(auto& th : threads){
+    for (auto& th : threads) {
         th.join();
     }
 }
 
-void server::HandleRpcs(grpc::ServerCompletionQueue *cq) {
+void server::HandleRpcs(grpc::ServerCompletionQueue* cq) {
     // Spawn a new CallData instance to serve new clients.
     new CallDataGet(&service_, cq, replica_instance_);
     new CallDataPut(&service_, cq, replica_instance_);

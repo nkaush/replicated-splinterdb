@@ -2,6 +2,7 @@
 #define REPLICATED_SPLINTERDB_CLIENT_CLIENT_H
 
 #include <grpcpp/grpcpp.h>
+
 #include <map>
 
 #include "kvstore.grpc.pb.h"
@@ -40,7 +41,8 @@ class client {
     int32_t get_leader_id();
 
   private:
-    std::map<int32_t, std::unique_ptr<kvstore::ReplicatedKVStore::Stub>> clients_;
+    std::map<int32_t, std::unique_ptr<kvstore::ReplicatedKVStore::Stub>>
+        clients_;
     std::unique_ptr<read_policy> read_policy_;
     int32_t leader_id_;
     const uint16_t num_retries_;

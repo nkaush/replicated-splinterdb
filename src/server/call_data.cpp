@@ -135,7 +135,7 @@ void CallDataGetClusterEndpoints::HandleRequest(replica& replica_instance) {
     replica_instance.get_all_servers(configs);
 
     for (auto cfg : configs) {
-        kvstore::ClientFacingEndpoint* cfe = 
+        kvstore::ClientFacingEndpoint* cfe =
             Arena::CreateMessage<kvstore::ClientFacingEndpoint>(&arena);
 
         cfe->mutable_server_id()->set_id(cfg->get_id());

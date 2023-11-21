@@ -3,11 +3,11 @@
 
 #include <grpcpp/grpcpp.h>
 
+#include "kvstore.grpc.pb.h"
 #include "replicated-splinterdb/server/replica.h"
 #include "replicated-splinterdb/server/replica_config.h"
 #include "rpc/server.h"
 #include "rpc/this_handler.h"
-#include "kvstore.grpc.pb.h"
 
 namespace replicated_splinterdb {
 
@@ -38,7 +38,7 @@ class server {
 
     void initialize();
 
-    void HandleRpcs(grpc::ServerCompletionQueue *cq);
+    void HandleRpcs(grpc::ServerCompletionQueue* cq);
 };
 
 }  // namespace replicated_splinterdb
