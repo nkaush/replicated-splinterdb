@@ -27,7 +27,6 @@ using kvstore::KVPair;
 using kvstore::MutationResponse;
 using kvstore::ReadResponse;
 using kvstore::ReplicatedKVStore;
-using kvstore::ReplicationResult;
 using kvstore::ServerID;
 using std::string;
 
@@ -57,8 +56,7 @@ client::client(const string& host, uint16_t port,
         }
 
         for (auto& e : endpoints.endpoints()) {
-            srvs.emplace_back(e.server_id().id(),
-                              e.client_endpoint().connection_string());
+            srvs.emplace_back(e.server_id(), e.client_endpoint());
         }
     }
 
@@ -72,7 +70,7 @@ client::client(const string& host, uint16_t port,
                       << status.error_message() << std::endl;
         }
 
-        leader_id_ = sid.id();
+        leader_id_ = sid.server_id();
     }
 
     std::vector<int32_t> srv_ids;
@@ -155,7 +153,7 @@ rpc_read_result client::get(const string& key) {
                    ->second->Get(&ctx, req, &resp);
 
     replicated_splinterdb::splinterdb_return_code kvsr;
-    std::memcpy(&kvsr, resp.kvstore_result().result().data(), sizeof(kvsr));
+    std::memcpy(&kvsr, resp.kvstore_result().data(), sizeof(kvsr));
 
     if (resp.has_value()) {
         return {resp.value(), kvsr};
@@ -203,13 +201,11 @@ rpc_mutation_result client::put(const string& key, const string& value) {
         Status status = cl.Put(&ctx, kvp, &mr);
 
         replicated_splinterdb::splinterdb_return_code kvsr = -1;
-        if (mr.repl_result().rc() == 0) {
-            std::memcpy(&kvsr, mr.kvstore_result().result().data(),
-                        sizeof(kvsr));
+        if (mr.raft_rc() == 0) {
+            std::memcpy(&kvsr, mr.kvstore_result().data(), sizeof(kvsr));
         }
 
-        return rpc_mutation_result{kvsr, mr.repl_result().rc(),
-                                   mr.repl_result().msg()};
+        return rpc_mutation_result{kvsr, mr.raft_rc(), mr.raft_msg()};
     });
 }
 
@@ -225,13 +221,11 @@ rpc_mutation_result client::update(const string& key, const string& value) {
         Status status = cl.Update(&ctx, kvp, &mr);
 
         replicated_splinterdb::splinterdb_return_code kvsr = -1;
-        if (mr.repl_result().rc() == 0) {
-            std::memcpy(&kvsr, mr.kvstore_result().result().data(),
-                        sizeof(kvsr));
+        if (mr.raft_rc() == 0) {
+            std::memcpy(&kvsr, mr.kvstore_result().data(), sizeof(kvsr));
         }
 
-        return rpc_mutation_result{kvsr, mr.repl_result().rc(),
-                                   mr.repl_result().msg()};
+        return rpc_mutation_result{kvsr, mr.raft_rc(), mr.raft_msg()};
     });
 }
 
@@ -246,13 +240,11 @@ rpc_mutation_result client::del(const std::string& key) {
         Status status = cl.Delete(&ctx, key_msg, &mr);
 
         replicated_splinterdb::splinterdb_return_code kvsr = -1;
-        if (mr.repl_result().rc() == 0) {
-            std::memcpy(&kvsr, mr.kvstore_result().result().data(),
-                        sizeof(kvsr));
+        if (mr.raft_rc() == 0) {
+            std::memcpy(&kvsr, mr.kvstore_result().data(), sizeof(kvsr));
         }
 
-        return rpc_mutation_result{kvsr, mr.repl_result().rc(),
-                                   mr.repl_result().msg()};
+        return rpc_mutation_result{kvsr, mr.raft_rc(), mr.raft_msg()};
     });
 }
 
@@ -272,8 +264,7 @@ std::vector<std::tuple<int32_t, string>> client::get_all_servers() {
             }
 
             for (auto& e : endpoints.endpoints()) {
-                srvs.emplace_back(e.server_id().id(),
-                                  e.client_endpoint().connection_string());
+                srvs.emplace_back(e.server_id(), e.client_endpoint());
             }
 
             return srvs;
@@ -300,8 +291,8 @@ int32_t client::get_leader_id() {
                 if (!status.ok()) {
                     std::cerr << "ERROR: GetLeaderID RPC failed: "
                               << status.error_message() << std::endl;
-                } else if (sid.id() != GET_LEADER_NO_LIVE_LEADER) {
-                    return sid.id();
+                } else if (sid.server_id() != GET_LEADER_NO_LIVE_LEADER) {
+                    return sid.server_id();
                 } else if (print_errors_) {
                     std::cerr << "WARNING: no live leader, retrying..."
                               << std::endl;
