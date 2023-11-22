@@ -2,31 +2,18 @@ syntax = "proto3";
 
 package kvstore;
 
-////////////////////////////////////////////////////////////////////////////////
-//               The following messages are KV-Store DEPENDENT                //
-////////////////////////////////////////////////////////////////////////////////
-
-// An opaque result type for all kv-store operations. Users will define bindings
-// to serialize and deserialize the kv-store's result to and from bytes.
-message KVStoreResult {
-    bytes result = 1;
-}
-
 // The result of a kv-store mutation
 message MutationResponse {
-    ReplicationResult repl_result = 1;
-    optional KVStoreResult kvstore_result = 2;
+    int32 raft_rc = 1;
+    string raft_msg = 2;
+    optional bytes kvstore_result = 3;
 }
 
 // The result of a read to the kv-store
 message ReadResponse {
     optional bytes value = 1;
-    optional KVStoreResult kvstore_result = 2;
+    optional bytes kvstore_result = 2;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-//              The following messages are KV-Store INDEPENDENT               //
-////////////////////////////////////////////////////////////////////////////////
 
 message Empty {}
 
@@ -39,23 +26,13 @@ message KVPair {
     bytes value = 2;
 }
 
-// The NuRaft data describing the result of replication
-message ReplicationResult {
-    int32 rc = 1;
-    string msg = 2;
-}
-
 message ServerID {
-    int32 id = 1;
-}
-
-message Endpoint {
-    string connection_string = 1;
+    int32 server_id = 1;
 }
 
 message ClientFacingEndpoint {
-    ServerID server_id = 1;
-    Endpoint client_endpoint = 2;
+    int32 server_id = 1;
+    string client_endpoint = 2;
 }
 
 message ClusterEndpoints {
@@ -63,9 +40,9 @@ message ClusterEndpoints {
 }
 
 message ServerEndpoint {
-    ServerID server_id = 1;
-    Endpoint raft_endpoint = 2;
-    Endpoint client_endpoint = 3;
+    int32 server_id = 1;
+    string raft_endpoint = 2;
+    string client_endpoint = 3;
 }
 
 service ReplicatedKVStore {
@@ -82,6 +59,12 @@ service ReplicatedKVStore {
     rpc GetClusterEndpoints (Empty) returns (ClusterEndpoints) {}
 }
 
+// The NuRaft data describing the result of replication
+message JoinClusterResult {
+    int32 rc = 1;
+    string msg = 2;
+}
+
 service RaftCluster {
-    rpc JoinReplicaSet (ServerEndpoint) returns (ReplicationResult) {}
+    rpc JoinReplicaSet (ServerEndpoint) returns (JoinClusterResult) {}
 }

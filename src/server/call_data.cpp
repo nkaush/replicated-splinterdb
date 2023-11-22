@@ -8,7 +8,6 @@ namespace replicated_splinterdb {
 
 using google::protobuf::Arena;
 using grpc::Status;
-using kvstore::KVStoreResult;
 using kvstore::ReadResponse;
 using nuraft::buffer;
 using nuraft::ptr;
@@ -43,8 +42,7 @@ void CallDataGet::HandleRequest(replica& replica_instance) {
         reply_.set_value(*res.first);
     }
 
-    reply_.mutable_kvstore_result()->set_result(INT_AS_BYTES(res.second),
-                                                sizeof(res.second));
+    reply_.set_kvstore_result(INT_AS_BYTES(res.second), sizeof(res.second));
 
     AddToCompletionQueue();
 }
@@ -56,13 +54,12 @@ void CallDataPut::HandleRequest(replica& replica_instance) {
 
     res->when_ready(
         [this](replica::raft_result& result, ptr<std::exception>& exn) {
-            reply_.mutable_repl_result()->set_rc(result.get_result_code());
-            reply_.mutable_repl_result()->set_msg(result.get_result_str());
+            reply_.set_raft_rc(result.get_result_code());
+            reply_.set_raft_msg(result.get_result_str());
 
             if (result.get_accepted()) {
                 int32_t rc = result.get()->get_int();
-                reply_.mutable_kvstore_result()->set_result(INT_AS_BYTES(rc),
-                                                            sizeof(rc));
+                reply_.set_kvstore_result(INT_AS_BYTES(rc), sizeof(rc));
             }
             
             AddToCompletionQueue();
@@ -76,13 +73,12 @@ void CallDataUpdate::HandleRequest(replica& replica_instance) {
 
     res->when_ready(
         [this](replica::raft_result& result, ptr<std::exception>& exn) {
-            reply_.mutable_repl_result()->set_rc(result.get_result_code());
-            reply_.mutable_repl_result()->set_msg(result.get_result_str());
+            reply_.set_raft_rc(result.get_result_code());
+            reply_.set_raft_msg(result.get_result_str());
 
             if (result.get_accepted()) {
                 int32_t rc = result.get()->get_int();
-                reply_.mutable_kvstore_result()->set_result(INT_AS_BYTES(rc),
-                                                            sizeof(rc));
+                reply_.set_kvstore_result(INT_AS_BYTES(rc), sizeof(rc));
             }
             
             AddToCompletionQueue();
@@ -95,13 +91,12 @@ void CallDataDelete::HandleRequest(replica& replica_instance) {
 
     res->when_ready(
         [this](replica::raft_result& result, ptr<std::exception>& exn) {
-            reply_.mutable_repl_result()->set_rc(result.get_result_code());
-            reply_.mutable_repl_result()->set_msg(result.get_result_str());
+            reply_.set_raft_rc(result.get_result_code());
+            reply_.set_raft_msg(result.get_result_str());
 
             if (result.get_accepted()) {
                 int32_t rc = result.get()->get_int();
-                reply_.mutable_kvstore_result()->set_result(INT_AS_BYTES(rc),
-                                                            sizeof(rc));
+                reply_.set_kvstore_result(INT_AS_BYTES(rc), sizeof(rc));
             }
             
             AddToCompletionQueue();
@@ -109,7 +104,7 @@ void CallDataDelete::HandleRequest(replica& replica_instance) {
 }
 
 void CallDataGetLeaderID::HandleRequest(replica& replica_instance) {
-    reply_.set_id(replica_instance.get_leader());
+    reply_.set_server_id(replica_instance.get_leader());
     AddToCompletionQueue();
 }
 
@@ -122,9 +117,8 @@ void CallDataGetClusterEndpoints::HandleRequest(replica& replica_instance) {
         kvstore::ClientFacingEndpoint* cfe =
             Arena::CreateMessage<kvstore::ClientFacingEndpoint>(&arena);
 
-        cfe->mutable_server_id()->set_id(cfg->get_id());
-        cfe->mutable_client_endpoint()->set_connection_string(cfg->get_aux());
-
+        cfe->set_server_id(cfg->get_id());
+        cfe->set_client_endpoint(cfg->get_aux());
         reply_.mutable_endpoints()->AddAllocated(cfe);
     }
 
