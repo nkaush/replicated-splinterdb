@@ -26,14 +26,14 @@ client::client(const string& host, uint16_t port,
       print_errors_(print_errors) {
     rpc::client cl{host, port};
 
-    std::vector<std::tuple<int32_t, string>> srvs;
+    rpc_cluster_endpoints srvs;
     try {
         if (cl.call(RPC_PING).as<string>() != "pong") {
             throw std::runtime_error("server returned unexpected response");
         }
 
         srvs = cl.call(RPC_GET_ALL_SERVERS)
-                   .as<std::vector<std::tuple<int32_t, string>>>();
+                   .as<rpc_cluster_endpoints>();
 
         leader_id_ = cl.call(RPC_GET_LEADER_ID).as<int32_t>();
     } catch (const std::exception& e) {
@@ -41,10 +41,10 @@ client::client(const string& host, uint16_t port,
         exit(1);
     }
 
-    for (const auto& [srv_id, endpoint] : srvs) {
-        auto delim_idx = endpoint.find(':');
-        string srv_host = endpoint.substr(0, delim_idx);
-        int srv_port = std::stoi(endpoint.substr(delim_idx + 1));
+    for (const auto& srv : srvs.endpoints()) {
+        auto delim_idx = srv.endpoint().find(':');
+        string srv_host = srv.endpoint().substr(0, delim_idx);
+        int srv_port = std::stoi(srv.endpoint().substr(delim_idx + 1));
 
         if (1 > srv_port || srv_port > 65535) {
             string msg = "invalid port number for host \"" + srv_host +
@@ -55,10 +55,10 @@ client::client(const string& host, uint16_t port,
         auto checked_port = static_cast<uint16_t>(srv_port);
         try {
             clients_.emplace(std::piecewise_construct,
-                             std::forward_as_tuple(srv_id),
+                             std::forward_as_tuple(srv.id()),
                              std::forward_as_tuple(srv_host, checked_port));
         } catch (const std::exception& e) {
-            std::cerr << "WARNING: failed to connect to " << endpoint
+            std::cerr << "WARNING: failed to connect to " << srv.endpoint()
                       << " ... skipping. Reason:\n\t" << e.what() << std::endl;
             continue;
         }
@@ -144,14 +144,13 @@ rpc_mutation_result client::retry_mutation(
     for (uint16_t i = 0; i < num_retries_; ++i) {
         result = f();
 
-        if (was_accepted(result)) {
+        if (result.was_accepted()) {
             break;
-        } else if (get_nuraft_return_code(result) == CMD_RESULT_WEIRD_CASE) {
+        } else if (result.raft_rc() == CMD_RESULT_WEIRD_CASE) {
             std::cout << "WARNING: weird case. Verify that kvp was mutated: "
                       << key << std::endl;
-            std::get<1>(result) = 0;
             break;
-        } else if (try_handle_leader_change(get_nuraft_return_code(result))) {
+        } else if (try_handle_leader_change(result.raft_rc())) {
             if (print_errors_) {
                 std::cerr << "WARNING: leader changed, retrying..."
                           << std::endl;
@@ -187,11 +186,11 @@ rpc_mutation_result client::del(const std::string& key) {
     });
 }
 
-std::vector<std::tuple<int32_t, string>> client::get_all_servers() {
+rpc_cluster_endpoints client::get_all_servers() {
     for (auto& [srv_id, c] : clients_) {
         try {
             return c.call(RPC_GET_ALL_SERVERS)
-                .as<std::vector<std::tuple<int32_t, string>>>();
+                .as<rpc_cluster_endpoints>();
         } catch (const std::exception& e) {
             std::cerr << "WARNING: failed to connect to " << srv_id
                       << " ... skipping. Reason:\n\t" << e.what() << std::endl;

@@ -13,7 +13,10 @@ DEFINE_string(e, "",
 #define CLM_GREEN "\033[32m"
 #define CLM_END "\033[0m"
 
+using replicated_splinterdb::rpc_cluster_endpoints;
 using replicated_splinterdb::rpc_mutation_result;
+using replicated_splinterdb::rpc_read_result;
+using replicated_splinterdb::rpc_server_info;
 
 static bool handle_mutation_result(rpc_mutation_result&& result);
 
@@ -23,16 +26,14 @@ static bool handle_command(rpc::client& client,
                            const std::vector<std::string>& tokens);
 
 bool handle_mutation_result(rpc_mutation_result&& result) {
-    auto [spl_rc, raft_rc, msg] = result;
-
-    if (raft_rc == 0 && spl_rc == 0) {
+    if (result.is_success()) {
         std::cout << "succeeded" << std::endl;
         return true;
-    } else if (raft_rc != 0) {
-        std::cout << "append log failed, rc=" << raft_rc << ": " << msg
-                  << std::endl;
-    } else if (spl_rc != 0) {
-        std::cout << "put failed, rc=" << spl_rc << std::endl;
+    } else if (result.raft_rc() != 0) {
+        std::cout << "append log failed, rc=" << result.raft_rc() << ": " 
+                  << result.raft_msg() << std::endl;
+    } else if (result.splinterdb_rc() != 0) {
+        std::cout << "put failed, rc=" << result.splinterdb_rc() << std::endl;
     }
 
     return false;
@@ -69,30 +70,27 @@ static bool handle_command(replicated_splinterdb::client& client,
         auto res = client.del(tokens[1]);
         return handle_mutation_result(std::move(res));
     } else if (cmd == "get" && tokens.size() >= 2) {
-        auto [value, spl_rc] = client.get(tokens[1]);
+        rpc_read_result res{client.get(tokens[1])};
 
-        if (spl_rc == 0) {
-            std::cout << "value: " << std::string(value.begin(), value.end())
-                      << std::endl;
+        if (res.rc() == 0) {
+            std::cout << "value: " << res.value() << std::endl;
             return true;
         } else {
-            std::cout << "get failed, rc=" << spl_rc << std::endl;
+            std::cout << "get failed, rc=" << res.rc() << std::endl;
             return false;
         }
     } else if (cmd == "ls") {
-        std::vector<std::tuple<int32_t, std::string>> srvs =
-            client.get_all_servers();
-
+        rpc_cluster_endpoints srvs = client.get_all_servers();
         int32_t leader_id = client.get_leader_id();
 
-        std::cout << "server id : client-facing endpoint" << std::endl;
-        for (const auto& [srv_id, endpoint] : srvs) {
+        std::cout << "id : client-facing endpoint" << std::endl;
+        for (const auto& s : srvs.endpoints()) {
             std::string extra{};
-            if (srv_id == leader_id) {
+            if (s.id() == leader_id) {
                 extra = " (LEADER)";
             }
 
-            std::cout << srv_id << " : " << endpoint << extra << std::endl;
+            std::cout << s.id() << "  : " << s.endpoint() << extra << std::endl;
         }
 
         return true;

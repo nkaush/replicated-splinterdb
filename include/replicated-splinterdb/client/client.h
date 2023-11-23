@@ -34,7 +34,7 @@ class client {
 
     void trigger_cache_clear();
 
-    std::vector<std::tuple<int32_t, std::string>> get_all_servers();
+    rpc_cluster_endpoints get_all_servers();
 
     int32_t get_leader_id();
 

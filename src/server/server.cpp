@@ -62,8 +62,7 @@ static rpc_mutation_result extract_result(ptr<replica::raft_result> result) {
         }
     }
 
-    return std::tuple<int32_t, int32_t, std::string>{spl_rc, raft_rc,
-                                                     result->get_result_str()};
+    return {spl_rc, raft_rc, result->get_result_str()};
 }
 
 void server::initialize() {
@@ -101,41 +100,28 @@ void server::initialize() {
     client_srv_.bind(RPC_GET_LEADER_ID,
                      [this]() { return replica_instance_.get_leader(); });
 
-    // void -> std::vector<std::tuple<int32_t, std::string>>
+    // void -> rpc_cluster_endpoints
     client_srv_.bind(RPC_GET_ALL_SERVERS, [this]() {
         std::vector<ptr<nuraft::srv_config>> configs;
         replica_instance_.get_all_servers(configs);
 
-        std::vector<std::tuple<int32_t, std::string>> result;
+        std::vector<rpc_server_info> result;
         for (auto& srv : configs) {
             result.emplace_back(srv->get_id(), srv->get_aux());
         }
 
-        return result;
-    });
-
-    // int32_t -> std::string
-    client_srv_.bind(RPC_GET_SRV_ENDPOINT, [this](int32_t server_id) {
-        auto srv = replica_instance_.get_server_info(server_id);
-
-        if (srv) {
-            return srv->get_aux();
-        } else {
-            rpc::this_handler().respond_error(
-                std::make_tuple("Invalid server id"));
-            return std::string{};
-        }
+        return rpc_cluster_endpoints{std::move(result)};
     });
 
     // string -> rpc_read_result
     client_srv_.bind(RPC_SPLINTERDB_GET, [this](string key) {
         slice key_slice = slice_create(key.size(), key.data());
-        auto [slice, rc] = replica_instance_.read(std::move(key_slice));
+        auto [data, rc] = replica_instance_.read(std::move(key_slice));
 
         if (rc == 0) {
-            return rpc_read_result{*slice, 0};
+            return rpc_read_result{std::move(data), 0};
         } else {
-            return rpc_read_result{{}, rc};
+            return rpc_read_result{rc};
         }
     });
 
