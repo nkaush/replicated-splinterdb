@@ -88,8 +88,8 @@ class rpc_server_info {
 
     rpc_server_info& operator=(rpc_server_info&&) = default;
 
-    rpc_server_info(int32_t id, std::string&& endpoint)
-        : id_(id), endpoint_(std::forward<std::string>(endpoint)) {}
+    rpc_server_info(int32_t id, const std::string& endpoint)
+        : id_(id), endpoint_(endpoint) {}
 
     MSGPACK_DEFINE_ARRAY(id_, endpoint_);
 
