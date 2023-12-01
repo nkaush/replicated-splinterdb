@@ -3,7 +3,6 @@
 ## Building from Scratch
 
 ```bash
-export NTHREADS=10
 export CC=clang
 export LD=clang
 export CXX=clang++
@@ -12,7 +11,7 @@ cd replicated-splinterdb/
 git submodule update --init --recursive
 sudo ./setup_server.sh
 mkdir build && cd build
-cmake .. && make -j $NTHREADS all spl-server
+cmake .. && make -j `nproc` all spl-server
 export PATH=`pwd`/apps:$PATH  # OPTIONAL: Add newly built executables to PATH
 ```
 
