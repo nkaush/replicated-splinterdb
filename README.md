@@ -31,9 +31,9 @@ The container will start in a shell in the `/work/build` directory. Run `./build
 
 # Starting:
 ```
-./spl-server -serverid 1 -bind all -raftport 10000 -joinport 10001 -clientport 10002
+./build/apps/spl-server -serverid 1 -bind all -raftport 10000 -joinport 10001 -clientport 10002
 
-./spl-server -serverid 2 -bind all -raftport 10003 -joinport 10004 -clientport 10005 -seed localhost:10001
+./build/apps/spl-server -serverid 2 -bind all -raftport 10003 -joinport 10004 -clientport 10005 -seed localhost:10001
 
-./spl-server -serverid 3 -bind all -raftport 10006 -joinport 10007 -clientport 10008 -seed localhost:10001
+./build/apps/spl-server -serverid 3 -bind all -raftport 10006 -joinport 10007 -clientport 10008 -seed localhost:10001
 ```
