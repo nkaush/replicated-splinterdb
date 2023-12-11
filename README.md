@@ -11,8 +11,7 @@ cd replicated-splinterdb/
 git submodule update --init --recursive
 sudo ./setup_server.sh
 mkdir build && cd build
-cmake .. && make -j `nproc` all spl-server
-export PATH=`pwd`/apps:$PATH  # OPTIONAL: Add newly built executables to PATH
+cmake .. && make -j `nproc` all spl-server spl-client
 ```
 
 ## Development Process
@@ -32,9 +31,9 @@ The container will start in a shell in the `/work/build` directory. Run `./build
 
 # Starting:
 ```
-./spl-server -serverid 1 -raftport 10000 -joinport 10001 -clientport 10002
+./spl-server -serverid 1 -bind all -raftport 10000 -joinport 10001 -clientport 10002
 
-./spl-server -serverid 2 -raftport 10003 -joinport 10004 -clientport 10005 -join_endpoint localhost:10001
+./spl-server -serverid 2 -bind all -raftport 10003 -joinport 10004 -clientport 10005 -seed localhost:10001
 
-./spl-server -serverid 3 -raftport 10006 -joinport 10007 -clientport 10008 -join_endpoint localhost:10001
+./spl-server -serverid 3 -bind all -raftport 10006 -joinport 10007 -clientport 10008 -seed localhost:10001
 ```
