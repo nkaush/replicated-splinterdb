@@ -16,7 +16,9 @@ using std::vector;
 
 server::server(uint16_t client_port, uint16_t join_port,
                const replica_config& cfg)
-    : replica_instance_{cfg}, client_srv_{cfg.addr_, client_port}, join_srv_{cfg.addr_, join_port} {
+    : replica_instance_{cfg},
+      client_srv_{cfg.addr_, client_port},
+      join_srv_{cfg.addr_, join_port} {
     initialize();
 
     client_srv_.set_worker_init_func(

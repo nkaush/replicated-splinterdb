@@ -30,7 +30,7 @@ bool handle_mutation_result(rpc_mutation_result&& result) {
         std::cout << "succeeded" << std::endl;
         return true;
     } else if (result.raft_rc() != 0) {
-        std::cout << "append log failed, rc=" << result.raft_rc() << ": " 
+        std::cout << "append log failed, rc=" << result.raft_rc() << ": "
                   << result.raft_msg() << std::endl;
     } else if (result.splinterdb_rc() != 0) {
         std::cout << "put failed, rc=" << result.splinterdb_rc() << std::endl;
