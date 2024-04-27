@@ -52,7 +52,7 @@ add_custom_target(
 )
 
 add_custom_target(
-    format COMMAND find 
+    fmt COMMAND find 
         ${ReplicatedSplinterDB_SOURCE_DIR}/src
         ${ReplicatedSplinterDB_SOURCE_DIR}/apps
         ${ReplicatedSplinterDB_SOURCE_DIR}/include
