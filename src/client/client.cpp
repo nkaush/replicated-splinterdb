@@ -22,6 +22,7 @@ client::client(const string& host, uint16_t port,
                uint64_t timeout_ms, uint16_t num_retries, bool print_errors)
     : clients_(),
       read_policy_(nullptr),
+      algo_(read_algo),
       num_retries_(num_retries),
       print_errors_(print_errors) {
     rpc::client cl{host, port};
@@ -86,6 +87,9 @@ client::client(const string& host, uint16_t port,
             read_policy_ =
                 std::make_unique<random_uniform_read_policy>(srv_ids);
             break;
+        case read_policy::algorithm::fixed:
+            read_policy_ = std::make_unique<fixed_read_policy>(srv_ids);
+            break;
         default:
             throw std::runtime_error("Invalid read policy");
     }
@@ -131,9 +135,17 @@ bool client::try_handle_leader_change(int32_t raft_result_code) {
     return false;
 }
 
-rpc_read_result client::get(const string& key) {
-    return clients_.find(read_policy_->next_server(key))
-        ->second.call(RPC_SPLINTERDB_GET, key)
+rpc_read_result client::get(const string& key, std::optional<uint32_t> server) {
+    uint32_t target_server = 0;
+    if (server.has_value()) {
+        target_server = *server;
+    } else if (read_policy_ != nullptr) {
+        target_server = read_policy_->next_server(key);
+    } else {
+        throw std::runtime_error("manual read policy specified and no server specified.");
+    }
+
+    return clients_.find(target_server)->second.call(RPC_SPLINTERDB_GET, key)
         .as<rpc_read_result>();
 }
 
@@ -234,6 +246,13 @@ int32_t client::get_leader_id() {
     }
 
     throw std::runtime_error("failed to connect to any server");
+}
+
+void client::set_fixed_key_mapping(std::unordered_map<string, size_t>&& m) {
+    if (algo_ == read_policy::algorithm::fixed) {
+        auto frp = static_cast<fixed_read_policy*>(read_policy_.get());
+        frp->set_mapping(std::forward<std::unordered_map<string, size_t>>(m));
+    }
 }
 
 }  // namespace replicated_splinterdb

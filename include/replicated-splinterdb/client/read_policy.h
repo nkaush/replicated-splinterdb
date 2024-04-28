@@ -1,18 +1,18 @@
 #ifndef REPLICATED_SPLINTERDB_READ_POLICY_H
 #define REPLICATED_SPLINTERDB_READ_POLICY_H
 
-// #include <cstdint>
 #include <memory>
 #include <numeric>
 #include <random>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace replicated_splinterdb {
 
 class read_policy {
   public:
-    enum class algorithm { hash, round_robin, random_token, random_uniform };
+    enum class algorithm { hash, round_robin, random_token, random_uniform, fixed };
 
     explicit read_policy(const std::vector<int32_t>& server_ids)
         : server_ids_(server_ids) {}
@@ -124,6 +124,24 @@ class hash_read_policy : public range_based_read_policy<uint32_t> {
 
   protected:
     uint32_t get_token(const std::string& key) override;
+};
+
+class fixed_read_policy : public read_policy {
+  public:
+    explicit fixed_read_policy(const std::vector<int32_t>& server_ids)
+        : read_policy(server_ids), mapping_() {}
+
+    void set_mapping(std::unordered_map<std::string, size_t>&& m) {
+        mapping_ = std::forward<std::unordered_map<std::string, size_t>>(m);
+    }
+
+  protected:
+    size_t next(const std::string& key) override {
+        return mapping_.at(key);
+    }
+
+  private:
+    std::unordered_map<std::string, size_t> mapping_;
 };
 
 }  // namespace replicated_splinterdb

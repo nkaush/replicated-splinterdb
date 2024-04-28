@@ -22,7 +22,7 @@ class client {
            uint64_t timeout_ms = 10000, uint16_t num_retries = 3,
            bool print_errors = false);
 
-    rpc_read_result get(const std::string& key);
+    rpc_read_result get(const std::string& key, std::optional<uint32_t> server = std::nullopt);
 
     rpc_mutation_result put(const std::string& key, const std::string& val);
 
@@ -38,9 +38,12 @@ class client {
 
     int32_t get_leader_id();
 
+    void set_fixed_key_mapping(std::unordered_map<std::string, size_t>&& m);
+
   private:
     std::map<int32_t, rpc::client> clients_;
     std::unique_ptr<read_policy> read_policy_;
+    read_policy::algorithm algo_;
     int32_t leader_id_;
     const uint16_t num_retries_;
     bool print_errors_;
