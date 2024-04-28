@@ -22,7 +22,7 @@ class client {
            uint64_t timeout_ms = 10000, uint16_t num_retries = 3,
            bool print_errors = false);
 
-    rpc_read_result get(const std::string& key, std::optional<uint32_t> server = std::nullopt);
+    rpc_read_result get(const std::string& key, std::optional<int32_t> server = std::nullopt);
 
     rpc_mutation_result put(const std::string& key, const std::string& val);
 

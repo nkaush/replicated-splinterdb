@@ -135,8 +135,8 @@ bool client::try_handle_leader_change(int32_t raft_result_code) {
     return false;
 }
 
-rpc_read_result client::get(const string& key, std::optional<uint32_t> server) {
-    uint32_t target_server = 0;
+rpc_read_result client::get(const string& key, std::optional<int32_t> server) {
+    int32_t target_server = 0;
     if (server.has_value()) {
         target_server = *server;
     } else if (read_policy_ != nullptr) {
