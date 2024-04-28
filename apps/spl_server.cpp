@@ -32,6 +32,7 @@ static bool validate_nthreads(const char* flagname, int64 value) {
 
 // Server initialization flags
 DEFINE_int32(serverid, -1, "The ID of the server");
+DEFINE_string(bind, "", "The IP address to bind this server to.");
 DEFINE_int32(
     raftport, 10001,
     "The port over which communication for replication should take place");
@@ -106,6 +107,13 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    if (FLAGS_bind.empty()) {
+        std::cerr << "ERROR: flag '-bind' is required." << std::endl;
+        return 1;
+    } else if (FLAGS_bind == "all") {
+        FLAGS_bind = "0.0.0.0";
+    }
+
     auto raft_port = static_cast<uint16_t>(FLAGS_raftport);
     auto client_port = static_cast<uint16_t>(FLAGS_clientport);
     auto join_port = static_cast<uint16_t>(FLAGS_joinport);
@@ -129,9 +137,7 @@ int main(int argc, char** argv) {
     replica_config cfg{splinter_data_cfg, splinterdb_cfg};
     cfg.server_id_ = FLAGS_serverid;
 
-    std::array<char, 100> hostnamebuf;
-    gethostname(hostnamebuf.data(), sizeof(hostnamebuf));
-    cfg.addr_ = hostnamebuf.data();
+    cfg.addr_ = FLAGS_bind.c_str();
     cfg.raft_port_ = raft_port;
     cfg.client_port_ = client_port;
 

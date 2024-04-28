@@ -11,8 +11,7 @@ cd replicated-splinterdb/
 git submodule update --init --recursive
 sudo ./setup_server.sh
 mkdir build && cd build
-cmake .. && make -j `nproc` all spl-server
-export PATH=`pwd`/apps:$PATH  # OPTIONAL: Add newly built executables to PATH
+cmake .. && make -j `nproc` all spl-server spl-client
 ```
 
 ## Development Process
@@ -23,18 +22,18 @@ The container will start in a shell in the `/work/build` directory. Run `./build
 
 ## TODOs
 
-- [ ] Track key-based miss rates in splinterdb
+- [x] Track key-based miss rates in splinterdb
 - [ ] Intelligent thread pool sizing
 - [ ] Detailed latency breakdowns
 - [ ] clang-tidy
-- [ ] Switch over to protobuf or some async networking library and use nuraft::async_handler
+- [x] Switch over to protobuf or some async networking library and use nuraft::async_handler
 - [ ] YAML config parsing (see [yaml-cpp](https://github.com/jbeder/yaml-cpp/wiki/Tutorial))
 
 # Starting:
 ```
-./spl-server -serverid 1 -raftport 10000 -joinport 10001 -clientport 10002
+./build/apps/spl-server -serverid 1 -bind all -raftport 10000 -joinport 10001 -clientport 10002
 
-./spl-server -serverid 2 -raftport 10003 -joinport 10004 -clientport 10005 -join_endpoint localhost:10001
+./build/apps/spl-server -serverid 2 -bind all -raftport 10003 -joinport 10004 -clientport 10005 -seed localhost:10001
 
-./spl-server -serverid 3 -raftport 10006 -joinport 10007 -clientport 10008 -join_endpoint localhost:10001
+./build/apps/spl-server -serverid 3 -bind all -raftport 10006 -joinport 10007 -clientport 10008 -seed localhost:10001
 ```

@@ -26,8 +26,7 @@ class rpc_read_result {
     rpc_read_result(std::unique_ptr<std::string>&& value, int32_t rc)
         : value_(std::forward<std::unique_ptr<std::string>>(value)), rc_(rc) {}
 
-    explicit rpc_read_result(int32_t rc)
-        : value_(), rc_(rc) {}
+    explicit rpc_read_result(int32_t rc) : value_(), rc_(rc) {}
 
     MSGPACK_DEFINE_ARRAY(value_, rc_);
 
@@ -96,6 +95,7 @@ class rpc_server_info {
     int32_t id() const { return id_; }
 
     const std::string& endpoint() const { return endpoint_; }
+
   private:
     int32_t id_;
     std::string endpoint_;
@@ -119,6 +119,7 @@ class rpc_cluster_endpoints {
     MSGPACK_DEFINE_ARRAY(endpoints_);
 
     const std::vector<rpc_server_info>& endpoints() const { return endpoints_; }
+
   private:
     std::vector<rpc_server_info> endpoints_;
 };
