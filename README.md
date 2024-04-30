@@ -9,7 +9,7 @@ export CXX=clang++
 git clone https://github.com/nkaush/replicated-splinterdb.git
 cd replicated-splinterdb/
 git submodule update --init --recursive
-sudo ./setup_server.sh
+sudo ./setup.sh
 mkdir build && cd build
 cmake .. && make -j `nproc` all spl-server spl-client
 ```

@@ -8,18 +8,20 @@
  */
 
 #include <cstring>
+#include <string>
 
 extern "C" {
+#define _Bool int
 #include "splinterdb/default_data_config.h"
 #include "splinterdb/splinterdb.h"
 }
 
 #define DB_FILE_NAME "splinterdb_intro_db"
 #define DB_FILE_SIZE_MB 1024  // Size of SplinterDB device; Fixed when created
-#define CACHE_SIZE_MB 32      // Size of cache; can be changed across boots
+#define CACHE_SIZE_MB 1      // Size of cache; can be changed across boots
 
 /* Application declares the limit of key-sizes it intends to use */
-#define USER_MAX_KEY_SIZE ((int)100)
+#define USER_MAX_KEY_SIZE ((int)24)
 
 /*
  * -------------------------------------------------------------------------------
@@ -53,18 +55,34 @@ int main() {
     printf("Created SplinterDB instance, dbname '%s'.\n\n", DB_FILE_NAME);
 
     // Insert a few kv-pairs, describing properties of fruits.
-    const char *fruit = "apple";
-    const char *descr = "An apple a day keeps the doctor away!";
-    slice key = slice_create((size_t)strlen(fruit), fruit);
-    slice value = slice_create((size_t)strlen(descr), descr);
+    std::string key = "user11111111111111111111";
+    std::string value(1434, 'a');
+    slice key_slice = slice_create(key.size(), key.data());
+    slice value_slice = slice_create(value.size(), value.data());
 
-    rc = splinterdb_insert(spl_handle, key, value);
-    printf("Inserted key '%s'\n", fruit);
-    
+    rc = splinterdb_insert(spl_handle, key_slice, value_slice);
+    printf("Inserted key '%s' rc=%d\n", key.data(), rc);
+
+    key = "user22222222222222222222";
+    key_slice = slice_create(key.size(), key.data());
+    rc = splinterdb_insert(spl_handle, key_slice, value_slice);
+    printf("Inserted key '%s' rc=%d\n", key.data(), rc);
+
+    for (size_t i = 0; i < 1; i++) {
+        splinterdb_lookup_result result;
+        splinterdb_lookup_result_init(spl_handle, &result, 0, NULL);
+        int retcode = splinterdb_lookup(spl_handle, key_slice, &result);
+
+        slice value_ret;
+        retcode = splinterdb_lookup_result_value(&result, &value_ret);
+        std::string output(static_cast<const char*>(value_ret.data),
+                        static_cast<size_t>(value_ret.length));
+        printf("got value of length %zu\n", output.size());
+    }
 
     splinterdb_print_cache(spl_handle, "cachedump");
-    splinterdb_stats_print_insertion(spl_handle);
-    splinterdb_stats_print_lookup(spl_handle);
+    // splinterdb_stats_print_insertion(spl_handle);
+    // splinterdb_stats_print_lookup(spl_handle);
 
     splinterdb_close(&spl_handle);
     printf("Shutdown SplinterDB instance, dbname '%s'.\n\n", DB_FILE_NAME);
